@@ -12,7 +12,7 @@ files. There is no YAML or TOML variant.
 | Scope | Path | Purpose |
 |---|---|---|
 | Global | `~/.vesvai/vesvai.json` | Providers, server, permission, theme, storage drivers, MCP and LSP servers |
-| Project | `<project>/.vesvai/` | Project data: `todos/`, `subagents/`, `plans/`, `rules/` |
+| Project | `<project>/.vesvai/` | Project data: `todos/`, `subagents/`, `plans/`, `rules/`, `prompt-history.json` |
 | Project | `<project>/.mcp.json` | Project MCP servers |
 | Project | `<project>/.lsp.json` | Project language servers |
 | Global | `~/.vesvai/permissions.json` | Remembered tool approvals and rejections |

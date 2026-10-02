@@ -76,9 +76,23 @@ subagent transcript, ++esc++ goes back to the main chat.
 | ++ctrl+shift+k++ | Delete line |
 | ++ctrl+shift+up++ / ++ctrl+shift+down++ | Move line up / down |
 | ++shift+arrows++ | Extend selection |
+| ++up++ on the first row | Recall the previous prompt |
+| ++down++ on the last row | Recall the next prompt, then the draft |
 
 Skills (`/name`), mentions (`@name`), and long pasted text are atomic **chips**:
 cursor movement and deletion treat each chip as a single unit.
+
+### Prompt history
+
+The last 200 submitted prompts are kept for recall. ++up++ loads the previous one
+when the cursor is already on the first row, so arrow keys still move inside a
+multi-line draft; ++down++ walks back toward the newest entry and finally
+restores the draft you were typing.
+
+History is per project and survives restarts: it is stored in
+`.vesvai/prompt-history.json` and loaded at startup. Switching to another
+session appends that session's own prompts to the end of the list, so the ones
+you just saw come up first. Delete the file to clear the history.
 
 ## Skills and mentions
 

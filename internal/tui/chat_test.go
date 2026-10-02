@@ -61,6 +61,7 @@ func waitFor(t *testing.T, timeout time.Duration, cond func() bool) {
 
 func newChatApp(t *testing.T, a *agent.Agent) (*App, event.Bus) {
 	t.Helper()
+	t.Chdir(t.TempDir())
 	bus := event.New()
 	ctx, cancel := context.WithCancel(context.Background())
 	app := &App{
