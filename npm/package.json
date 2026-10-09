@@ -1,6 +1,6 @@
 {
   "name": "@peggco/pegg",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "pegg — hands-free AI coding agent. Installs the native pegg binary for your platform.",
   "bin": {
     "pegg": "bin/pegg.js"
