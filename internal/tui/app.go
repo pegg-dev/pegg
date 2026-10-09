@@ -616,6 +616,9 @@ func (a *App) escHandledLocally() bool {
 	if a.getOverlay() != nil {
 		return true
 	}
+	if a.home != nil && a.home.AskOpen() {
+		return true
+	}
 	return a.chat != nil && a.chat.HasBack()
 }
 
@@ -800,6 +803,14 @@ func (a *App) drawLocked() {
 }
 
 func (a *App) handleFilePaste(text string) {
+	if a.home != nil && a.home.AskOpen() {
+		a.chatMu.Lock()
+		a.home.AskPicker().InsertPaste(text)
+		a.chatMu.Unlock()
+		a.requestRedraw()
+		return
+	}
+
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return
@@ -854,6 +865,11 @@ func (a *App) pasteShortText(text string) {
 	a.chatMu.Lock()
 	defer a.chatMu.Unlock()
 	if a.home == nil {
+		return
+	}
+	if a.home.AskOpen() {
+		a.home.AskPicker().InsertPaste(text)
+		a.requestRedraw()
 		return
 	}
 	input := a.home.Input()

@@ -429,6 +429,9 @@ func (p *Page) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 	}
 	p.input.SetInnerWidth(innerW)
 	inputH := p.input.VisibleRows() + 2
+	if p.askPicker.Active() {
+		inputH = p.askPicker.Height()
+	}
 	inputRegion := layout.Region{
 		Left:   bounds.Left + 2,
 		Top:    statusRegion.Top - inputH - 1,
@@ -437,6 +440,9 @@ func (p *Page) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 	}.Clamp(bounds)
 
 	attachH := p.attachmentBar.RequiredHeight()
+	if p.askPicker.Active() {
+		attachH = 0
+	}
 	attachRegion := layout.Region{}
 	if attachH > 0 {
 		attachRegion = layout.Region{
@@ -476,12 +482,16 @@ func (p *Page) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 		p.attachmentBar.Draw(s, attachRegion, focused && p.focus == focusAttachments)
 	}
 
-	p.input.Draw(s, inputRegion, focused && p.focus == focusInput)
+	if p.askPicker.Active() {
+		p.askPicker.Draw(s, inputRegion)
+	} else {
+		p.input.Draw(s, inputRegion, focused && p.focus == focusInput)
+	}
 
 	p.drawHint(s, bounds, inputRegion)
 
 	p.syncPickers()
-	if p.pickKind != pickNone {
+	if p.pickKind != pickNone && !p.askPicker.Active() {
 		var count int
 		switch p.pickKind {
 		case pickSkills:
@@ -516,23 +526,6 @@ func (p *Page) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 		}
 	}
 	p.status.Draw(s, statusRegion, true)
-
-	if p.askPicker.Active() {
-		pickH := p.askPicker.Height()
-		pickW := inputRegion.Width
-		if pickW < 24 {
-			pickW = 24
-		}
-		pickRegion := layout.Region{
-			Left:   bounds.Left + 2,
-			Top:    inputRegion.Top - pickH - 1,
-			Width:  pickW,
-			Height: pickH,
-		}.Clamp(bounds)
-		if pickRegion.Top >= bounds.Top {
-			p.askPicker.Draw(s, pickRegion)
-		}
-	}
 }
 
 func (p *Page) drawHint(s tcell.Screen, bounds, inputRegion layout.Region) {
