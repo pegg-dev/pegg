@@ -3,6 +3,7 @@ package http
 import (
 	"strings"
 	"testing"
+	"testing/iotest"
 )
 
 func TestNewLineDecoder(t *testing.T) {
@@ -147,6 +148,32 @@ func TestNewLineDecoder_EOFWithPartialLine(t *testing.T) {
 	_, err = decoder.Decode()
 	if err == nil {
 		t.Error("Decode() should return error after EOF")
+	}
+}
+
+func TestNewLineDecoder_EOFReturnedWithLastRead(t *testing.T) {
+	input := "data: {\"a\":1}\n\ndata: [DONE]\n\n"
+	decoder := NewLineDecoder(iotest.DataErrReader(strings.NewReader(input)))
+
+	var lines []string
+	for {
+		line, err := decoder.Decode()
+		if err != nil {
+			break
+		}
+		if len(line) > 0 {
+			lines = append(lines, string(line))
+		}
+	}
+
+	want := []string{"data: {\"a\":1}", "data: [DONE]"}
+	if len(lines) != len(want) {
+		t.Fatalf("lines = %q, want %q", lines, want)
+	}
+	for i := range want {
+		if lines[i] != want[i] {
+			t.Errorf("lines[%d] = %q, want %q", i, lines[i], want[i])
+		}
 	}
 }
 
