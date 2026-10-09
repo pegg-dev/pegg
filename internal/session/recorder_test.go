@@ -2,16 +2,17 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/compaction"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/builtin/middlewares/compaction"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 type stubProvider struct{ name string }
@@ -267,6 +268,81 @@ func TestRecorderStreamingMessageNotDuplicated(t *testing.T) {
 	}
 	if assistant[0].Content != "abcdefghij" || assistant[1].Content != "klmno" {
 		t.Fatalf("assistant messages = %+v", assistant)
+	}
+}
+
+func TestRecorderFinalMessageNotDuplicatedAfterFullCommit(t *testing.T) {
+	mgr, _, bus := newTestRecorder(t)
+	publishStarted(bus, "a1", "agent-one", "groq", "llama-3.3")
+	bus.Publish(agent.TopicAgentInput, agent.AgentInput{AgentID: "a1", Input: "hi"})
+
+	full := "abcdefghij"
+	for i := 0; i < len(full); i++ {
+		bus.Publish(agent.TopicAgentToken, agent.AgentToken{AgentID: "a1", Content: string(full[i])})
+	}
+	bus.Publish(agent.TopicAgentMessage, agent.AgentMessage{
+		AgentID: "a1", AgentName: "agent-one",
+		Message: llm.AssistantMessage(full),
+	})
+
+	sessions, _, _ := mgr.List(query.Query{})
+	msgs, err := mgr.Messages(sessions[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var assistant []Message
+	for _, m := range msgs {
+		if m.Role == llm.RoleAssistant {
+			assistant = append(assistant, m)
+		}
+	}
+	if len(assistant) != 1 {
+		t.Fatalf("assistant messages = %+v, want 1", assistant)
+	}
+	if fmt.Sprint(assistant[0].Content) != full {
+		t.Fatalf("assistant content = %q, want %q", assistant[0].Content, full)
+	}
+}
+
+func TestRecorderFinalMessageKeepsToolCallsWithoutDuplicatingText(t *testing.T) {
+	mgr, _, bus := newTestRecorder(t)
+	publishStarted(bus, "a1", "agent-one", "groq", "llama-3.3")
+	bus.Publish(agent.TopicAgentInput, agent.AgentInput{AgentID: "a1", Input: "hi"})
+
+	full := "abcdefghij"
+	for i := 0; i < len(full); i++ {
+		bus.Publish(agent.TopicAgentToken, agent.AgentToken{AgentID: "a1", Content: string(full[i])})
+	}
+	msg := llm.AssistantMessage(full)
+	msg.ToolCalls = []llm.ToolCall{{ID: "call-1", Function: llm.Function{Name: "read"}}}
+	bus.Publish(agent.TopicAgentMessage, agent.AgentMessage{
+		AgentID: "a1", AgentName: "agent-one",
+		Message: msg,
+	})
+
+	sessions, _, _ := mgr.List(query.Query{})
+	msgs, err := mgr.Messages(sessions[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var assistant []Message
+	for _, m := range msgs {
+		if m.Role == llm.RoleAssistant {
+			assistant = append(assistant, m)
+		}
+	}
+
+	var joined string
+	calls := 0
+	for _, m := range assistant {
+		joined += fmt.Sprint(m.Content)
+		calls += len(m.ToolCalls)
+	}
+	if joined != full {
+		t.Fatalf("assistant text = %q, want exactly %q", joined, full)
+	}
+	if calls != 1 {
+		t.Fatalf("tool calls = %d, want 1", calls)
 	}
 }
 

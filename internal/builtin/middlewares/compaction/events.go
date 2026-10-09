@@ -1,6 +1,6 @@
 package compaction
 
-import "github.com/vesvai/vesvai/internal/llm"
+import "github.com/peggco/pegg/internal/llm"
 
 const (
 	TopicCompactionStarted  = "agent.compaction.started"

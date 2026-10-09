@@ -3,9 +3,9 @@ package anthropic
 import (
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	claudedriver "github.com/vesvai/vesvai/internal/llm/drivers/claude"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	claudedriver "github.com/peggco/pegg/internal/llm/drivers/claude"
 )
 
 const (

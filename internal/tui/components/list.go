@@ -3,9 +3,9 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
-	"github.com/vesvai/vesvai/internal/utils/search"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
+	"github.com/peggco/pegg/internal/utils/search"
 )
 
 type ListItem struct {
@@ -25,6 +25,10 @@ type List struct {
 	filter   []rune
 	search   bool
 	onSelect func(index int, item ListItem)
+
+	drawRegion  layout.Region
+	drawTop     int
+	drawVisible int
 }
 
 func NewList(title string) *List {
@@ -82,20 +86,29 @@ func (l *List) rebuild() {
 }
 
 func (l *List) MoveUp() {
-	if len(l.filtered) == 0 {
-		return
-	}
-	if l.index > 0 {
-		l.index--
+	for i := l.index - 1; i >= 0; i-- {
+		if !l.all[l.filtered[i]].Disabled {
+			l.index = i
+			return
+		}
 	}
 }
 
 func (l *List) MoveDown() {
-	if len(l.filtered) == 0 {
-		return
+	for i := l.index + 1; i < len(l.filtered); i++ {
+		if !l.all[l.filtered[i]].Disabled {
+			l.index = i
+			return
+		}
 	}
-	if l.index < len(l.filtered)-1 {
-		l.index++
+}
+
+func (l *List) SelectFirstEnabled() {
+	for i := range l.filtered {
+		if !l.all[l.filtered[i]].Disabled {
+			l.index = i
+			return
+		}
 	}
 }
 
@@ -113,11 +126,22 @@ func (l *List) MovePageDown(page int) {
 	}
 }
 
-func (l *List) Home() { l.index = 0 }
+func (l *List) Home() {
+	for i := range l.filtered {
+		if !l.all[l.filtered[i]].Disabled {
+			l.index = i
+			return
+		}
+	}
+	l.index = 0
+}
 
 func (l *List) End() {
-	if len(l.filtered) > 0 {
-		l.index = len(l.filtered) - 1
+	for i := len(l.filtered) - 1; i >= 0; i-- {
+		if !l.all[l.filtered[i]].Disabled {
+			l.index = i
+			return
+		}
 	}
 }
 
@@ -149,7 +173,7 @@ func (l *List) HandleKey(ev *tcell.EventKey) bool {
 		return true
 	case tcell.KeyEnter:
 		if l.onSelect != nil {
-			if item, ok := l.Selected(); ok {
+			if item, ok := l.Selected(); ok && !item.Disabled {
 				l.onSelect(l.SelectedIndex(), item)
 			}
 		}
@@ -180,23 +204,67 @@ func (l *List) HandleKey(ev *tcell.EventKey) bool {
 	return false
 }
 
+func (l *List) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	if l.drawRegion.Width == 0 || x < l.drawRegion.Left || x >= l.drawRegion.Right() {
+		return false
+	}
+	switch {
+	case buttons&tcell.WheelUp != 0:
+		l.MoveUp()
+		return true
+	case buttons&tcell.WheelDown != 0:
+		l.MoveDown()
+		return true
+	}
+
+	idx := y - l.drawTop
+	inRow := idx >= 0 && idx < l.drawVisible
+	abs := l.scroll + idx
+
+	if buttons&tcell.ButtonPrimary != 0 {
+		if !inRow || abs < 0 || abs >= len(l.filtered) {
+			return false
+		}
+		if l.all[l.filtered[abs]].Disabled {
+			return true
+		}
+		l.index = abs
+		if l.onSelect != nil {
+			if item, ok := l.Selected(); ok {
+				l.onSelect(l.SelectedIndex(), item)
+			}
+		}
+		return true
+	}
+
+	if inRow && abs >= 0 && abs < len(l.filtered) && abs != l.index && !l.all[l.filtered[abs]].Disabled {
+		l.index = abs
+		return true
+	}
+	return false
+}
+
 func (l *List) Draw(s tcell.Screen, bounds layout.Region, _ bool) {
 	th := styles.Current()
 	style := th.Base().Background(th.InputBg)
 	FillRegion(s, bounds, ' ', style)
 
+	l.drawRegion = bounds
 	top := bounds.Top
 	if l.search && len(l.filter) > 0 {
 		DrawText(s, bounds.Left+1, top, "search: "+string(l.filter), th.Base().Foreground(th.Accent).Background(th.InputBg))
 		top++
 	}
+	l.drawTop = top
 
 	if len(l.filtered) == 0 {
 		DrawText(s, bounds.Left+1, top, "(no items)", th.Base().Foreground(th.Placeholder).Background(th.InputBg))
+		l.drawVisible = 0
 		return
 	}
 
 	visible := bounds.Bottom() - top
+	l.drawVisible = visible
 	if l.index < l.scroll {
 		l.scroll = l.index
 	}
@@ -212,19 +280,29 @@ func (l *List) Draw(s tcell.Screen, bounds layout.Region, _ bool) {
 		item := l.all[l.filtered[idx]]
 		y := top + i
 		rowStyle := style
-		if idx == l.index {
-			rowStyle = th.Base().Foreground(th.InputText).Background(th.Selection)
-		} else if item.Disabled {
+		switch {
+		case item.Disabled:
 			rowStyle = th.Base().Foreground(th.Muted).Background(th.InputBg)
+		case idx == l.index:
+			rowStyle = th.Base().Foreground(th.InputText).Background(th.Selection)
 		}
 		label := item.Label
 		if item.Marked {
 			label = "● " + label
 		}
-		DrawText(s, bounds.Left+1, y, TruncateTo(label, bounds.Width-2), rowStyle)
+		labelW := bounds.Width - 2
+		detail := ""
 		if item.Detail != "" {
-			d := TruncateTo(item.Detail, bounds.Width/2)
-			DrawText(s, bounds.Right()-len(d)-1, y, d, rowStyle)
+			detail = TruncateTo(item.Detail, bounds.Width/2)
+			if dw := DisplayWidth(detail); dw+2 < labelW {
+				labelW = bounds.Width - 2 - dw - 2
+			} else {
+				detail = ""
+			}
+		}
+		DrawText(s, bounds.Left+1, y, TruncateTo(label, labelW), rowStyle)
+		if detail != "" {
+			DrawText(s, bounds.Right()-DisplayWidth(detail)-1, y, detail, rowStyle)
 		}
 	}
 }

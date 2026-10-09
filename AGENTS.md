@@ -1,18 +1,18 @@
 # AGENTS.md
 
-This file provides guidance to Vesvai when working with code in this repository.
+This file provides guidance to Pegg when working with code in this repository.
 
 ## Project Overview
 
-Vesvai is a provider-agnostic AI coding agent written in Go. It runs as an interactive terminal application, a headless CLI, an HTTP API server, an Agent Client Protocol (ACP) server, or as an embeddable Go SDK. The agent can read and edit files, run shell commands, search the web, manage todos, delegate work to subagents, load skills, follow project rules, and talk to MCP and language servers — all inside a sandboxed workspace.
+Pegg is a provider-agnostic AI coding agent written in Go. It runs as an interactive terminal application, a headless CLI, an HTTP API server, an Agent Client Protocol (ACP) server, or as an embeddable Go SDK. The agent can read and edit files, run shell commands, search the web, manage todos, delegate work to subagents, load skills, follow project rules, and talk to MCP and language servers — all inside a sandboxed workspace.
 
 ## Repository Structure
 
-- `cmd/vesvai/` - Main binary entry point
+- `cmd/pegg/` - Main binary entry point
 - `internal/` - Core packages (agent, llm, tools, skills, session, etc.)
 - `docs/` - Documentation (system, SDK, plugin guides)
 - `pkg/sdk/` - Embeddable Go SDK
-- `.vesvai/` - Project-specific config, plans, and subagent state
+- `.pegg/` - Project-specific config, plans, and subagent state
 - `.github/workflows/` - CI/CD pipelines (test, fmt, vet, release)
 
 ## Build & Development Commands
@@ -40,7 +40,7 @@ make vet
 make run
 
 # Debug mode
-VESVAI_DEBUG=1 ./bin/vesvai
+PEGG_DEBUG=1 ./bin/pegg
 ```
 
 ## Code Style & Conventions
@@ -91,14 +91,14 @@ VESVAI_DEBUG=1 ./bin/vesvai
 ## Security & Compliance
 
 - **Secret Redaction**: Middleware auto-detects and redacts API keys/JWTs before LLM calls
-- **Filesystem Security**: Custom VFS respects `.gitignore`/`.vesvaignore`, blocks directory escape
-- **Permissions**: Stored in `.vesvai/` (project) and `~/.vesvai/` (global); prompts user for denied actions
+- **Filesystem Security**: Custom VFS respects `.gitignore`/`.peggignore`, blocks directory escape
+- **Permissions**: Stored in `.pegg/` (project) and `~/.pegg/` (global); prompts user for denied actions
 - **Judge LLM**: Pre-execution validation for sensitive tools (e.g., bash)
 - **Dependencies**: `go.mod` with pinned versions; `goreleaser` for cross-platform builds
 
 ## Agent Guardrails
 
-- **Files Never Touched**: `.vesvai/` config files, `~/.vesvai/` global config, `.env` secrets
+- **Files Never Touched**: `.pegg/` config files, `~/.pegg/` global config, `.env` secrets
 - **Required Reviews**: All changes to `internal/agent/`, `internal/llm/` require human review
 - **Rate Limits**: Provider circuit breakers enforce rate limits; fallback to secondary providers
 - **Context Limits**: Compacter agent summarizes when context window fills; deep compaction available
@@ -107,10 +107,10 @@ VESVAI_DEBUG=1 ./bin/vesvai
 ## Extensibility Hooks
 
 - **Hook System**: WordPress-style filters/actions throughout codebase (see `internal/agent/hooks.go`)
-- **Plugin Directory**: `~/.vesvai/plugins/` for global plugins
-- **Dynamic Skills**: Agents can create/save skills under `.vesvai/skills/`
+- **Plugin Directory**: `~/.pegg/plugins/` for global plugins
+- **Dynamic Skills**: Agents can create/save skills under `.pegg/skills/`
 - **Provider Registration**: New LLM providers added via CLI or config
-- **MCP/LSP Integration**: Remote/local servers defined in `vesvai.json` or global config
+- **MCP/LSP Integration**: Remote/local servers defined in `pegg.json` or global config
 
 ## Further Reading
 

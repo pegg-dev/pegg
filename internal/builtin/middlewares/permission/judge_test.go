@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func TestJudgeBuiltLazilyAndCached(t *testing.T) {

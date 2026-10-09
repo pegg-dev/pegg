@@ -1,7 +1,7 @@
 package vfs
 
 import (
-	"github.com/vesvai/vesvai/internal/core/hook"
+	"github.com/peggco/pegg/internal/core/hook"
 )
 
 type TransformContext struct {

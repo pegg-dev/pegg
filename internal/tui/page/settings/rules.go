@@ -8,9 +8,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 type rulesTab struct {
@@ -73,6 +73,10 @@ func listRuleFiles(dir string) []string {
 
 func (t *rulesTab) HandleKey(ev *tcell.EventKey) bool {
 	return t.list.HandleKey(ev)
+}
+
+func (t *rulesTab) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	return t.list.HandleMouse(x, y, buttons)
 }
 
 func (t *rulesTab) Draw(s tcell.Screen, bounds layout.Region, focused bool) {

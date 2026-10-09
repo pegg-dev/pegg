@@ -8,54 +8,54 @@ import (
 
 var Handshake = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
-	MagicCookieKey:   "VESVAI_PLUGIN",
-	MagicCookieValue: "vesvai",
+	MagicCookieKey:   "PEGG_PLUGIN",
+	MagicCookieValue: "pegg",
 }
 
 var PluginMap = map[string]plugin.Plugin{
-	"vesvai": &VesvaiPluginRPC{},
+	"pegg": &PeggPluginRPC{},
 }
 
-type VesvaiPluginRPC struct {
+type PeggPluginRPC struct {
 	Impl Plugin
 }
 
-func (p *VesvaiPluginRPC) Server(*plugin.MuxBroker) (interface{}, error) {
-	return &VesvaiPluginRPCServer{impl: p.Impl}, nil
+func (p *PeggPluginRPC) Server(*plugin.MuxBroker) (interface{}, error) {
+	return &PeggPluginRPCServer{impl: p.Impl}, nil
 }
 
-func (p *VesvaiPluginRPC) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return &VesvaiPluginRPCClient{client: c}, nil
+func (p *PeggPluginRPC) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+	return &PeggPluginRPCClient{client: c}, nil
 }
 
-type VesvaiPluginRPCServer struct {
+type PeggPluginRPCServer struct {
 	impl Plugin
 }
 
-func (s *VesvaiPluginRPCServer) Name(args interface{}, resp *string) error {
+func (s *PeggPluginRPCServer) Name(args interface{}, resp *string) error {
 	*resp = s.impl.Name()
 	return nil
 }
 
-func (s *VesvaiPluginRPCServer) Version(args interface{}, resp *string) error {
+func (s *PeggPluginRPCServer) Version(args interface{}, resp *string) error {
 	*resp = s.impl.Version()
 	return nil
 }
 
-func (s *VesvaiPluginRPCServer) Description(args interface{}, resp *string) error {
+func (s *PeggPluginRPCServer) Description(args interface{}, resp *string) error {
 	*resp = s.impl.Description()
 	return nil
 }
 
-func (s *VesvaiPluginRPCServer) Boot(args *Deps, resp *interface{}) error {
+func (s *PeggPluginRPCServer) Boot(args *Deps, resp *interface{}) error {
 	return s.impl.Boot(*args)
 }
 
-type VesvaiPluginRPCClient struct {
+type PeggPluginRPCClient struct {
 	client *rpc.Client
 }
 
-func (c *VesvaiPluginRPCClient) Name() string {
+func (c *PeggPluginRPCClient) Name() string {
 	var resp string
 	err := c.client.Call("Plugin.Name", new(interface{}), &resp)
 	if err != nil {
@@ -64,7 +64,7 @@ func (c *VesvaiPluginRPCClient) Name() string {
 	return resp
 }
 
-func (c *VesvaiPluginRPCClient) Version() string {
+func (c *PeggPluginRPCClient) Version() string {
 	var resp string
 	err := c.client.Call("Plugin.Version", new(interface{}), &resp)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *VesvaiPluginRPCClient) Version() string {
 	return resp
 }
 
-func (c *VesvaiPluginRPCClient) Description() string {
+func (c *PeggPluginRPCClient) Description() string {
 	var resp string
 	err := c.client.Call("Plugin.Description", new(interface{}), &resp)
 	if err != nil {
@@ -82,7 +82,7 @@ func (c *VesvaiPluginRPCClient) Description() string {
 	return resp
 }
 
-func (c *VesvaiPluginRPCClient) Boot(deps Deps) error {
+func (c *PeggPluginRPCClient) Boot(deps Deps) error {
 	var resp interface{}
 	return c.client.Call("Plugin.Boot", &deps, &resp)
 }

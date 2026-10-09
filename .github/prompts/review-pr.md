@@ -1,6 +1,6 @@
 # Review PR — additional instructions
 
-Appended to vesvabot's default review-pr prompt. Repository rules for vesvai:
+Appended to peggbot's default review-pr prompt. Repository rules for pegg:
 
 - Verify the change matches the SDK surface: anything new in `pkg/sdk/` must
   be exported and covered by a test in the same package.

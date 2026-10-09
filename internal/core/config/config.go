@@ -85,6 +85,24 @@ type PluginConfig struct {
 	Exclude []string `json:"exclude,omitempty"`
 }
 
+type ConnectConfig struct {
+	Enabled             bool     `json:"enabled"`
+	RelayURL            string   `json:"relay_url,omitempty"`
+	Token               string   `json:"token,omitempty"`
+	Insecure            bool     `json:"insecure,omitempty"`
+	AutoApprove         bool     `json:"auto_approve,omitempty"`
+	MaxConcurrency      int      `json:"max_concurrency,omitempty"`
+	AllowedMethods      []string `json:"allowed_methods,omitempty"`
+	DeviceName          string   `json:"device_name,omitempty"`
+	ResponseTimeoutSecs int      `json:"response_timeout_secs,omitempty"`
+}
+
+const DefaultConnectRelayURL = "ws://connect.pegg.dev"
+
+const DefaultConnectConcurrency = 4
+
+const DefaultConnectResponseTimeoutSecs = 180
+
 type CompactionConfig struct {
 	Enabled            bool     `json:"enabled"`
 	Strategy           []string `json:"strategy"`
@@ -108,6 +126,74 @@ type SmartRouterConfig struct {
 	Agents   map[string]RouterAgentConfig `json:"agents,omitempty"`
 }
 
+type MemoryConfig struct {
+	Enabled       bool     `json:"enabled"`
+	Provider      string   `json:"provider,omitempty"`
+	Model         string   `json:"model,omitempty"`
+	Gate          string   `json:"gate,omitempty"`
+	Threshold     *float64 `json:"threshold,omitempty"`
+	ContextBudget int      `json:"context_budget,omitempty"`
+	MaxResults    int      `json:"max_results,omitempty"`
+	Consolidate   *bool    `json:"consolidate,omitempty"`
+	SkipTools     []string `json:"skip_tools,omitempty"`
+}
+
+const (
+	DefaultMemoryThreshold  = 0.6
+	DefaultMemoryBudget     = 8000
+	DefaultMemoryMaxResults = 5
+
+	GateAuto     = "auto"
+	GateDecision = "decision"
+	GateLLM      = "llm"
+	GateScore    = "score"
+	GateOff      = "off"
+)
+
+var gateModes = []string{GateAuto, GateDecision, GateLLM, GateScore, GateOff}
+
+func (m *MemoryConfig) ThresholdValue() float64 {
+	if m == nil || m.Threshold == nil {
+		return DefaultMemoryThreshold
+	}
+	return *m.Threshold
+}
+
+func (m *MemoryConfig) BudgetValue() int {
+	if m == nil || m.ContextBudget <= 0 {
+		return DefaultMemoryBudget
+	}
+	return m.ContextBudget
+}
+
+func (m *MemoryConfig) MaxResultsValue() int {
+	if m == nil || m.MaxResults <= 0 {
+		return DefaultMemoryMaxResults
+	}
+	return m.MaxResults
+}
+
+func (m *MemoryConfig) ConsolidateValue() bool {
+	if m == nil || m.Consolidate == nil {
+		return true
+	}
+	return *m.Consolidate
+}
+
+func (m *MemoryConfig) GateValue() string {
+	if m == nil || m.Gate == "" {
+		return GateAuto
+	}
+	for _, mode := range gateModes {
+		if m.Gate == mode {
+			return mode
+		}
+	}
+	return GateAuto
+}
+
+func GateModes() []string { return gateModes }
+
 type Config struct {
 	Providers       []LLMConfig                     `json:"providers"`
 	Logger          LoggerConfig                    `json:"logger"`
@@ -119,13 +205,20 @@ type Config struct {
 	Permission      *PermissionConfig               `json:"permission,omitempty"`
 	Compaction      *CompactionConfig               `json:"compaction,omitempty"`
 	SmartRouter     *SmartRouterConfig              `json:"smart_router,omitempty"`
+	Memory          *MemoryConfig                   `json:"memory,omitempty"`
 	Plugins         PluginConfig                    `json:"plugins,omitempty"`
+	Connect         *ConnectConfig                  `json:"connect,omitempty"`
 	MCPServers      map[string]MCPServerConfig      `json:"mcp_servers,omitempty"`
 	LanguageServers map[string]LanguageServerConfig `json:"language_servers,omitempty"`
 }
 
 func DefaultConfig() *Config {
 	return &Config{
+		Providers: []LLMConfig{
+			{
+				Provider: "opencode-zen",
+			},
+		},
 		Logger: LoggerConfig{
 			Driver:      "sqlite",
 			MaxLogCount: 1000,
@@ -171,6 +264,10 @@ func DefaultConfig() *Config {
 		Plugins: PluginConfig{
 			Enabled: true,
 		},
+		Connect: &ConnectConfig{
+			Enabled:        false,
+			MaxConcurrency: DefaultConnectConcurrency,
+		},
 		Compaction: &CompactionConfig{
 			Enabled:            true,
 			Strategy:           []string{"tool-clearing", "sliding-window"},
@@ -179,8 +276,13 @@ func DefaultConfig() *Config {
 			MaxToolOutputChars: 4000,
 		},
 		SmartRouter: &SmartRouterConfig{
-			Enabled: true,
+			Enabled: false,
 			Agents:  make(map[string]RouterAgentConfig),
+		},
+		Memory: &MemoryConfig{
+			Enabled:       true,
+			ContextBudget: DefaultMemoryBudget,
+			MaxResults:    DefaultMemoryMaxResults,
 		},
 		MCPServers:      make(map[string]MCPServerConfig),
 		LanguageServers: make(map[string]LanguageServerConfig),
@@ -380,6 +482,24 @@ func UpsertCompaction(cfg *CompactionConfig) error {
 		return err
 	}
 	c.Compaction = cfg
+	return Save(c)
+}
+
+func UpsertMemory(cfg *MemoryConfig) error {
+	c, err := Load()
+	if err != nil {
+		return err
+	}
+	c.Memory = cfg
+	return Save(c)
+}
+
+func UpsertConnect(cfg *ConnectConfig) error {
+	c, err := Load()
+	if err != nil {
+		return err
+	}
+	c.Connect = cfg
 	return Save(c)
 }
 

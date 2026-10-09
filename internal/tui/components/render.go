@@ -144,11 +144,15 @@ func WrapSegments(segs []Segment, width int) []Line {
 	var pendingSpace *Cell
 	pendingW := 0
 
+	wordStart := -1
+	wordStartW := 0
+
 	for _, s := range segs {
 		for _, g := range graphemes(s.Text) {
 			if g.text == "\n" {
 				flush()
 				pendingSpace, pendingW = nil, 0
+				wordStart, wordStartW = -1, 0
 				continue
 			}
 			cells := make([]Cell, 0, len(g.text))
@@ -160,6 +164,7 @@ func WrapSegments(segs []Segment, width int) []Line {
 				c := Cell{R: ' ', S: s.Style}
 				pendingSpace = &c
 				pendingW = g.width
+				wordStart, wordStartW = -1, 0
 				continue
 			}
 
@@ -168,12 +173,29 @@ func WrapSegments(segs []Segment, width int) []Line {
 				needed += pendingW
 			}
 			if curW+needed > width {
-				flush()
+				if wordStart > 0 {
+					partial := append(Line{}, cur[wordStart:]...)
+					partialW := curW - wordStartW
+					cur = cur[:wordStart]
+					flush()
+					cur = partial
+					curW = partialW
+					wordStart, wordStartW = 0, 0
+				} else {
+					flush()
+					wordStart, wordStartW = 0, 0
+				}
 				pendingSpace, pendingW = nil, 0
 			}
 			if pendingSpace != nil && len(cur) > 0 {
 				cur = append(cur, *pendingSpace)
 				curW += pendingW
+				wordStart = len(cur)
+				wordStartW = curW
+				pendingSpace, pendingW = nil, 0
+			} else if wordStart < 0 {
+				wordStart = len(cur)
+				wordStartW = curW
 				pendingSpace, pendingW = nil, 0
 			}
 			cur = append(cur, cells...)

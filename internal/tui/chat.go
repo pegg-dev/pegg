@@ -8,13 +8,13 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/compaction"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/page/settings"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/builtin/middlewares/compaction"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/page/settings"
 )
 
 type agentTranscript struct {
@@ -681,9 +681,10 @@ func (a *App) prepareAgentRun(input string, attachments []llm.Attachment) (conte
 	if orch.Bus == nil {
 		orch.Bus = a.bus
 	}
-	if orch.Provider == nil || orch.Model.ID == "" {
+	if a.model.model.ID != "" {
 		if prov, err := a.deps.LLM.Provider(a.model.provider); err == nil {
 			orch.SetModelProvider(a.model.model, prov)
+			a.syncHistorySystemPromptLocked()
 		}
 	}
 	orch.ReasoningEffort = a.reasoningEffort
@@ -698,6 +699,15 @@ func (a *App) prepareAgentRun(input string, attachments []llm.Attachment) (conte
 	a.chatMu.Unlock()
 
 	return ctx, cancel, history
+}
+
+func (a *App) syncHistorySystemPromptLocked() {
+	if a.agent == nil || a.agent.SystemPrompt == "" || len(a.history) == 0 {
+		return
+	}
+	if a.history[0].Role == llm.RoleSystem {
+		a.history[0] = llm.SystemMessage(a.agent.SystemPrompt)
+	}
 }
 
 func (a *App) finishAgentRun(cancel context.CancelFunc) {
@@ -752,11 +762,11 @@ func (a *App) onSubAgentNotification(e agent.SubAgentNotification) {
 
 func (a *App) activateItem(it *components.ChatItem) {
 	a.chatMu.Lock()
-	defer a.chatMu.Unlock()
 	switch it.Kind {
 	case components.ItemThinking, components.ItemTool:
 		it.Expanded = !it.Expanded
 		a.chat.InvalidateItemPtr(it)
+		a.chatMu.Unlock()
 		a.requestRedraw()
 	case components.ItemSubagent:
 		if it.SubagentStatus == "running" {
@@ -764,12 +774,184 @@ func (a *App) activateItem(it *components.ChatItem) {
 				a.showTranscript(t)
 				a.chat.SetBack(true)
 			}
-		} else {
-			it.Expanded = !it.Expanded
-			a.chat.InvalidateItemPtr(it)
-			a.requestRedraw()
+			a.chatMu.Unlock()
+			return
+		}
+		it.Expanded = !it.Expanded
+		a.chat.InvalidateItemPtr(it)
+		a.chatMu.Unlock()
+		a.requestRedraw()
+	case components.ItemUser:
+		mainID := ""
+		if a.agent != nil {
+			mainID = a.agent.ID
+		}
+		isMain := a.viewID == mainID
+		a.chatMu.Unlock()
+		if isMain {
+			a.openUserMenu(it)
+		}
+	default:
+		a.chatMu.Unlock()
+	}
+}
+
+func (a *App) openUserMenu(it *components.ChatItem) {
+	if a.deps.Sessions == nil {
+		return
+	}
+	sid, mid, ok := a.resolveUserMessage(it)
+	if !ok {
+		return
+	}
+	text := it.Text
+	items := []components.MenuItem{
+		{Label: "Copy text", OnSelect: func() { a.copyText(text) }},
+		{Label: "Revert message", OnSelect: func() { a.doRevert(sid, mid, it) }},
+		{Label: "Fork message", OnSelect: func() { a.forkMessage(sid, mid, it) }},
+	}
+	a.showMenu(items)
+}
+
+func (a *App) showMenu(items []components.MenuItem) {
+	menu := components.NewMenu(items, a.mouseX, a.mouseY)
+	menu.SetOnClose(func() {
+		a.setOverlay(nil)
+		a.requestRedraw()
+	})
+	a.setOverlay(menu)
+	a.requestRedraw()
+}
+
+func (a *App) closeMenu() {
+	a.setOverlay(nil)
+	a.requestRedraw()
+}
+
+func (a *App) resolveUserMessage(it *components.ChatItem) (string, string, bool) {
+	a.chatMu.Lock()
+	defer a.chatMu.Unlock()
+	if it.MsgID != "" && it.MsgSessionID != "" {
+		return it.MsgSessionID, it.MsgID, true
+	}
+	if a.session == nil || a.deps.Sessions == nil || a.chat == nil {
+		return "", "", false
+	}
+	sid := a.session.info.ID
+	if sid == "" {
+		return "", "", false
+	}
+	items := a.chat.Items()
+	userIndex, total := -1, 0
+	for _, candidate := range items {
+		if candidate.Kind != components.ItemUser {
+			continue
+		}
+		if candidate == it {
+			userIndex = total
+		}
+		total++
+	}
+	if userIndex < 0 {
+		return "", "", false
+	}
+	k := total - 1 - userIndex
+	msgs, err := a.deps.Sessions.Messages(sid)
+	if err != nil {
+		return "", "", false
+	}
+	var users []session.Message
+	for _, m := range msgs {
+		if m.Role == llm.RoleUser {
+			users = append(users, m)
 		}
 	}
+	if k < 0 || k >= len(users) {
+		return "", "", false
+	}
+	target := users[len(users)-1-k]
+	return sid, target.ID, true
+}
+
+func (a *App) copyText(text string) {
+	a.closeMenu()
+	if text == "" {
+		return
+	}
+	a.screen.SetClipboard([]byte(text))
+}
+
+func (a *App) doRevert(sid, mid string, it *components.ChatItem) {
+	a.closeMenu()
+	if a.deps.Sessions == nil {
+		return
+	}
+	if _, _, err := a.deps.Sessions.RevertFrom(sid, mid); err != nil {
+		a.showError("revert failed: " + err.Error())
+		return
+	}
+	info, ok := a.sessionInfoFor(sid)
+	if !ok {
+		return
+	}
+	a.activateSession(info)
+	a.restoreToInput(it)
+}
+
+func (a *App) forkMessage(sid, mid string, it *components.ChatItem) {
+	a.closeMenu()
+	if a.deps.Sessions == nil {
+		return
+	}
+	fork, err := a.deps.Sessions.ForkBefore(sid, mid)
+	if err != nil {
+		a.showError("fork failed: " + err.Error())
+		return
+	}
+	info, ok := a.sessionInfoFor(fork.ID)
+	if !ok {
+		return
+	}
+	a.activateSession(info)
+	a.restoreToInput(it)
+}
+
+func (a *App) sessionInfoFor(id string) (settings.SessionInfo, bool) {
+	sess, err := a.deps.Sessions.Get(id)
+	if err != nil {
+		a.showError("load session failed: " + err.Error())
+		return settings.SessionInfo{}, false
+	}
+	msgs, err := a.deps.Sessions.Messages(id)
+	if err != nil {
+		a.showError("load messages failed: " + err.Error())
+		return settings.SessionInfo{}, false
+	}
+	return settings.SessionInfo{
+		ID:                 sess.ID,
+		Title:              sess.Title,
+		Provider:           sess.Provider,
+		Model:              sess.Model,
+		ReasoningEffort:    sess.ReasoningEffort,
+		CompactionParentID: sess.CompactionParentID,
+		Messages:           msgs,
+		Usage:              sess.Usage,
+	}, true
+}
+
+func (a *App) restoreToInput(it *components.ChatItem) {
+	a.chatMu.Lock()
+	defer a.chatMu.Unlock()
+	if a.home == nil {
+		return
+	}
+	a.home.Input().SetValue(it.Text)
+	for _, att := range it.Attachments {
+		a.home.AttachmentBar().Add(att)
+	}
+	a.refreshMentionItemsLocked()
+	a.refreshHomeLocked()
+	a.requestRedraw()
 }
 
 func (a *App) openSubagentHistory(agentID string) {
@@ -920,7 +1102,7 @@ func messagesToItems(msgs []session.Message) []*components.ChatItem {
 		switch m.Role {
 		case llm.RoleUser:
 			flushAssistant()
-			out = append(out, &components.ChatItem{Kind: components.ItemUser, Text: messageText(m)})
+			out = append(out, &components.ChatItem{Kind: components.ItemUser, Text: messageText(m), MsgID: m.ID, MsgSessionID: m.SessionID})
 		case llm.RoleAssistant:
 			pendingReasoning += messageReasoning(m)
 			pendingText += messageText(m)

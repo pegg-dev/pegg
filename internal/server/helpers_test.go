@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 type mockStore struct {
@@ -69,6 +69,10 @@ func (m *mockStore) Messages(sessionID string) ([]session.Message, error) {
 }
 
 func (m *mockStore) TruncateAfter(sessionID, messageID string) ([]session.Message, error) {
+	return nil, nil
+}
+
+func (m *mockStore) TruncateFrom(sessionID, messageID string) ([]session.Message, error) {
 	return nil, nil
 }
 

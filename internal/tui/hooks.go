@@ -5,9 +5,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/hook"
-	"github.com/vesvai/vesvai/internal/tui/components"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/hook"
+	"github.com/peggco/pegg/internal/tui/components"
 )
 
 type KeyEvent struct {

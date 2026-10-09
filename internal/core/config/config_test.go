@@ -2,6 +2,25 @@ package config
 
 import "testing"
 
+func findProvider(cfg *Config, name string) *LLMConfig {
+	for i := range cfg.Providers {
+		if cfg.Providers[i].Provider == name {
+			return &cfg.Providers[i]
+		}
+	}
+	return nil
+}
+
+func TestDefaultConfigHasOpenCodeZen(t *testing.T) {
+	p := findProvider(DefaultConfig(), "opencode-zen")
+	if p == nil {
+		t.Fatal("default config should include opencode-zen")
+	}
+	if p.APIKey != "" {
+		t.Fatalf("opencode-zen API key = %q, want empty", p.APIKey)
+	}
+}
+
 func TestUpsertProviderAdds(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 
@@ -16,8 +35,11 @@ func TestUpsertProviderAdds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cfg.Providers) != 2 {
-		t.Fatalf("providers = %+v, want 2", cfg.Providers)
+	if len(cfg.Providers) != 3 {
+		t.Fatalf("providers = %+v, want 3 (default + groq + openai)", cfg.Providers)
+	}
+	if findProvider(cfg, "opencode-zen") == nil {
+		t.Fatalf("default opencode-zen provider missing: %+v", cfg.Providers)
 	}
 }
 
@@ -35,11 +57,11 @@ func TestUpsertProviderUpdates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cfg.Providers) != 1 {
-		t.Fatalf("providers = %+v, want 1", cfg.Providers)
+	if len(cfg.Providers) != 2 {
+		t.Fatalf("providers = %+v, want 2 (default + groq)", cfg.Providers)
 	}
-	if cfg.Providers[0].Provider != "groq" || cfg.Providers[0].APIKey != "b" {
-		t.Fatalf("provider = %+v, want groq/b", cfg.Providers[0])
+	if p := findProvider(cfg, "groq"); p == nil || p.APIKey != "b" {
+		t.Fatalf("groq provider = %+v, want API key b", p)
 	}
 }
 
@@ -61,8 +83,14 @@ func TestRemoveProvider(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cfg.Providers) != 1 || cfg.Providers[0].Provider != "openai" {
-		t.Fatalf("providers = %+v, want only openai", cfg.Providers)
+	if findProvider(cfg, "groq") != nil {
+		t.Fatalf("groq should be removed: %+v", cfg.Providers)
+	}
+	if findProvider(cfg, "openai") == nil {
+		t.Fatalf("openai should remain: %+v", cfg.Providers)
+	}
+	if findProvider(cfg, "opencode-zen") == nil {
+		t.Fatalf("default provider should remain: %+v", cfg.Providers)
 	}
 
 	if err := RemoveProvider("nope"); err == nil {

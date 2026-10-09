@@ -822,7 +822,7 @@ func TestAgentsMd(t *testing.T) {
 func TestRules(t *testing.T) {
 	t.Run("global and project rules", func(t *testing.T) {
 		homeDir := t.TempDir()
-		rulesDir := filepath.Join(homeDir, ".vesvai", "rules")
+		rulesDir := filepath.Join(homeDir, ".pegg", "rules")
 		if err := os.MkdirAll(rulesDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -832,7 +832,7 @@ func TestRules(t *testing.T) {
 		}
 
 		projectDir := t.TempDir()
-		projectRulesDir := filepath.Join(projectDir, ".vesvai", "rules")
+		projectRulesDir := filepath.Join(projectDir, ".pegg", "rules")
 		if err := os.MkdirAll(projectRulesDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -894,7 +894,7 @@ func TestRules(t *testing.T) {
 
 	t.Run("empty rules directory", func(t *testing.T) {
 		dir := t.TempDir()
-		rulesDir := filepath.Join(dir, ".vesvai", "rules")
+		rulesDir := filepath.Join(dir, ".pegg", "rules")
 		if err := os.MkdirAll(rulesDir, 0o755); err != nil {
 			t.Fatal(err)
 		}

@@ -3,7 +3,6 @@ package todo
 import (
 	"context"
 	"fmt"
-	json "github.com/goccy/go-json"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,12 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type Todo struct {

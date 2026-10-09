@@ -8,9 +8,9 @@ import (
 	json "github.com/goccy/go-json"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type ItemKind int
@@ -30,6 +30,9 @@ const (
 type ChatItem struct {
 	Kind ItemKind
 	ID   string
+
+	MsgID        string
+	MsgSessionID string
 
 	Text      string
 	Reasoning string
@@ -94,6 +97,18 @@ type Chat struct {
 	cache      [][]Line
 	cacheWidth int
 	dirty      bool
+
+	selActive  bool
+	selStart   selPos
+	selEnd     selPos
+	mouseDown  bool
+	mouseStart selPos
+	dragged    bool
+}
+
+type selPos struct {
+	line int
+	cell int
 }
 
 func NewChat() *Chat {
@@ -110,6 +125,7 @@ func (c *Chat) SetItems(items []*ChatItem) {
 	c.flatRev = -1
 	c.dirty = true
 	c.itemCursor = -1
+	c.selActive = false
 }
 
 func (c *Chat) sel() int {
@@ -364,6 +380,186 @@ func (c *Chat) HandleClick(x, y, top int) bool {
 	return true
 }
 
+func (c *Chat) posAt(x, y, top, left int) (selPos, bool) {
+	contentTop := top
+	if c.backVisible {
+		contentTop++
+	}
+	line := y - contentTop + c.scroll
+	if line < 0 || line >= len(c.flat) {
+		return selPos{}, false
+	}
+	cell := x - (left + 1)
+	if cell < 0 {
+		cell = 0
+	}
+	return selPos{line: line, cell: cell}, true
+}
+
+func (c *Chat) selectionBounds() (selPos, selPos, bool) {
+	if !c.selActive {
+		return selPos{}, selPos{}, false
+	}
+	a, b := c.selStart, c.selEnd
+	if a.line > b.line || (a.line == b.line && a.cell > b.cell) {
+		a, b = b, a
+	}
+	return a, b, true
+}
+
+func (c *Chat) HasSelection() bool { return c.selActive }
+
+func (c *Chat) ClearSelection() {
+	if c.selActive {
+		c.selActive = false
+		c.dirty = true
+	}
+}
+
+func (c *Chat) setSelection(a, b selPos) {
+	c.selStart, c.selEnd = a, b
+	c.selActive = true
+	c.dirty = true
+}
+
+func (c *Chat) HandleMouse(x, y, top, left int, buttons tcell.ButtonMask) bool {
+	pos, ok := c.posAt(x, y, top, left)
+	pressed := buttons&tcell.ButtonPrimary != 0
+
+	if pressed {
+		if !c.mouseDown {
+			c.mouseDown = true
+			c.dragged = false
+			if ok {
+				c.mouseStart = pos
+			}
+		} else if ok && c.isDrag(pos) {
+			c.dragged = true
+			c.setSelection(c.mouseStart, pos)
+		}
+		return true
+	}
+
+	if c.mouseDown {
+		c.mouseDown = false
+		if c.dragged && c.selActive {
+			c.dragged = false
+			return true
+		}
+		c.dragged = false
+		c.ClearSelection()
+		return c.HandleClick(x, y, top)
+	}
+	return false
+}
+
+func (c *Chat) isDrag(pos selPos) bool {
+	if pos.line != c.mouseStart.line {
+		return true
+	}
+	d := pos.cell - c.mouseStart.cell
+	if d < 0 {
+		d = -d
+	}
+	return d > 1
+}
+
+var frameRunes = map[rune]bool{
+	'┌': true, '┐': true, '└': true, '┘': true, '─': true, '│': true, '▍': true,
+}
+
+func isFrameOnly(cells []Cell) bool {
+	for _, c := range cells {
+		if !frameRunes[c.R] && c.R != ' ' {
+			return false
+		}
+	}
+	return true
+}
+
+func sanitizeSelectedCells(cells []Cell) string {
+	var b strings.Builder
+	for _, c := range cells {
+		if frameRunes[c.R] {
+			continue
+		}
+		b.WriteRune(c.R)
+	}
+	return strings.TrimRight(b.String(), " \t")
+}
+
+func (c *Chat) SelectedText() string {
+	a, b, ok := c.selectionBounds()
+	if !ok || len(c.flat) == 0 {
+		return ""
+	}
+	if a.line >= len(c.flat) {
+		return ""
+	}
+	if b.line >= len(c.flat) {
+		b.line = len(c.flat) - 1
+		b.cell = len(c.flat[b.line])
+	}
+	var out []string
+	for line := a.line; line <= b.line; line++ {
+		cells := c.flat[line]
+		from, to := 0, len(cells)
+		if line == a.line {
+			from = a.cell
+		}
+		if line == b.line {
+			to = b.cell
+		}
+		if from > to {
+			from = to
+		}
+		if from > len(cells) {
+			from = len(cells)
+		}
+		if to > len(cells) {
+			to = len(cells)
+		}
+		seg := cells[from:to]
+		if isFrameOnly(seg) {
+			continue
+		}
+		out = append(out, sanitizeSelectedCells(seg))
+	}
+	return strings.Join(out, "\n")
+}
+
+func (c *Chat) applySelection(idx int, line Line, s, e selPos, th styles.Theme) Line {
+	if idx < s.line || idx > e.line {
+		return line
+	}
+	from, to := 0, len(line)
+	if idx == s.line {
+		from = s.cell
+	}
+	if idx == e.line {
+		to = e.cell
+	}
+	if from < 0 {
+		from = 0
+	}
+	if from > len(line) {
+		from = len(line)
+	}
+	if to > len(line) {
+		to = len(line)
+	}
+	if from >= to {
+		return line
+	}
+	selStyle := th.Base().Background(th.Selection)
+	out := make(Line, len(line))
+	copy(out, line)
+	for i := from; i < to; i++ {
+		out[i].S = selStyle
+	}
+	return out
+}
+
 func (c *Chat) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 	th := styles.Current()
 	bg := th.Base().Background(th.Background)
@@ -419,6 +615,7 @@ func (c *Chat) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 		markerLine = c.flatItems[c.itemCursor].Start
 	}
 
+	selS, selE, hasSel := c.selectionBounds()
 	for row := 0; row < visible; row++ {
 		idx := offset + row
 		if idx >= total {
@@ -431,7 +628,11 @@ func (c *Chat) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 		} else {
 			s.SetContent(x, y, ' ', nil, bg)
 		}
-		DrawLineBounded(s, x+1, y, bounds.Left+bounds.Width, c.flat[idx])
+		line := c.flat[idx]
+		if hasSel {
+			line = c.applySelection(idx, line, selS, selE, th)
+		}
+		DrawLineBounded(s, x+1, y, bounds.Left+bounds.Width, line)
 	}
 
 	c.indicatorVisible = false
@@ -584,9 +785,9 @@ func (c *Chat) itemLines(it *ChatItem, width int) []Line {
 		return nil
 	case ItemError:
 		th := styles.Current()
-		lines = []Line{LineFromSegments([]Segment{
+		lines = WrapSegments([]Segment{
 			{Text: "✖ error: " + it.Text, Style: th.Base().Foreground(th.Error).Bold(true).Background(th.Background)},
-		}, width)}
+		}, width)
 	case ItemCompaction:
 		th := styles.Current()
 		lines = []Line{LineFromSegments([]Segment{

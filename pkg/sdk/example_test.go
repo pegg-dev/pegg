@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vesvai/vesvai/pkg/sdk"
+	"github.com/peggco/pegg/pkg/sdk"
 )
 
 func Example() {

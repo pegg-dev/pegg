@@ -2,12 +2,13 @@ package cli
 
 import (
 	"fmt"
-	json "github.com/goccy/go-json"
 	"io"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 func (c *CLI) newConfigCommand() *cobra.Command {

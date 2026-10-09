@@ -518,3 +518,37 @@ func TestDoStream_HandlerError(t *testing.T) {
 		t.Errorf("DoStream() error = %v, want %v", err, handlerErr)
 	}
 }
+
+func TestDo_AuthHeaderAndRefreshRetry(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if calls == 1 {
+			if got := r.Header.Get("Authorization"); got != "Bearer old" {
+				t.Errorf("first auth = %q, want Bearer old", got)
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"expired"}`))
+			return
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer new" {
+			t.Errorf("second auth = %q, want Bearer new", got)
+		}
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+
+	token := "old"
+	refreshed := false
+	client := NewClient(srv.URL,
+		WithAuthHeader("Authorization", func(context.Context) (string, error) { return "Bearer " + token, nil }),
+		WithRefresh(func(context.Context) error { token = "new"; refreshed = true; return nil }),
+	)
+	var out map[string]bool
+	if err := client.Do(context.Background(), "GET", "/x", nil, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !refreshed || calls != 2 || !out["ok"] {
+		t.Fatalf("refreshed=%v calls=%d out=%v", refreshed, calls, out)
+	}
+}

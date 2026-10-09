@@ -9,12 +9,12 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/hook"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/hook"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 const maxCandidates = 40
@@ -91,6 +91,9 @@ func New(deps Deps, log *logger.Logger) *Router {
 		if a.ParentAgentID == "" && a.Model.ID != SmartRouterModel {
 			return mr
 		}
+		if a.ParentAgentID != "" && !a.RouterManaged {
+			return mr
+		}
 		prov, mdl, err := r.Select(mr.Ctx, SelectRequest{
 			AgentName: a.Name,
 			Task:      mr.Input,
@@ -98,6 +101,7 @@ func New(deps Deps, log *logger.Logger) *Router {
 		})
 		if err == nil {
 			a.SetModelProvider(mdl, prov)
+			a.RouterManaged = true
 		}
 		return mr
 	})

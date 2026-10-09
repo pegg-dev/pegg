@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/agent/reminder"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/reminder"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func PlanTools(fs *vfs.VFS) {
@@ -62,7 +62,7 @@ func PlanModeReminder() reminder.Reminder {
 		Paragraph("Plan mode is active. The user indicated that they do not want you to execute yet -- you MUST NOT make any edits (with the exception of the plan file mentioned below), run any non-readonly tools (including changing configs or making commits), or otherwise make any changes to the system. This supersedes any other instructions you have received.").
 		Hr(3).
 		Heading(2, "Plan File Info").
-		Paragraph("No plan file exists yet. You should create your plan at `.vesvai/plans/plan.md` using the Write tool.").
+		Paragraph("No plan file exists yet. You should create your plan at `.pegg/plans/plan.md` using the Write tool.").
 		Paragraph("You should build your plan incrementally by writing to or editing this file. NOTE that this is the only file you are allowed to edit - other than this you are only allowed to take READ-ONLY actions.").
 		Paragraph("**Plan File Guidelines:** The plan file should contain only your final recommended approach, not all alternatives considered. Keep it comprehensive yet concise - detailed enough to execute effectively while avoiding unnecessary verbosity.").
 		Hr(3).

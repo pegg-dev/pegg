@@ -5,12 +5,12 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/mcp"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/mcp"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type tabKind int
@@ -23,10 +23,11 @@ const (
 	tabRules
 	tabPlugins
 	tabPermissions
+	tabMemory
 	tabSystem
 )
 
-var tabNames = []string{"General", "Session", "MCP", "Skills", "Rules", "Plugins", "Permissions", "System"}
+var tabNames = []string{"General", "Session", "MCP", "Skills", "Rules", "Plugins", "Permissions", "Memory", "System"}
 
 type settingsFocus int
 
@@ -64,6 +65,7 @@ type Settings struct {
 	session     *sessionTab
 	plugins     *pluginsTab
 	permissions *permissionsTab
+	memory      *memoryTab
 	system      *systemTab
 
 	active *SessionInfo
@@ -73,6 +75,8 @@ type Settings struct {
 	errMsg string
 
 	reasoningEffort string
+
+	bounds layout.Region
 
 	onRequestUpdate func()
 	requestRedraw   func()
@@ -85,6 +89,8 @@ type Settings struct {
 	onThemeChange           func()
 }
 
+var _ components.MouseComponent = (*Settings)(nil)
+
 func New(deps Deps) *Settings {
 	s := &Settings{deps: deps, tabs: components.NewTabs(tabNames)}
 	s.tabs.SetFocused(true)
@@ -95,6 +101,7 @@ func New(deps Deps) *Settings {
 	s.session = newSessionTab(s)
 	s.plugins = newPlugins(s)
 	s.permissions = newPermissions(s)
+	s.memory = newMemoryTab(s)
 	s.system = newSystem(s)
 	return s
 }
@@ -255,6 +262,8 @@ func (s *Settings) HandleKey(ev *tcell.EventKey) bool {
 		handled = s.plugins.HandleKey(ev)
 	case tabPermissions:
 		handled = s.permissions.HandleKey(ev)
+	case tabMemory:
+		handled = s.memory.HandleKey(ev)
 	case tabSystem:
 		handled = s.system.HandleKey(ev)
 	}
@@ -268,10 +277,7 @@ func (s *Settings) HandleKey(ev *tcell.EventKey) bool {
 	return handled
 }
 
-func (s *Settings) Draw(screen tcell.Screen, bounds layout.Region, focused bool) {
-	th := styles.Current()
-	components.DrawModalBackdrop(screen, bounds)
-
+func settingsBoxSize(bounds layout.Region) (int, int) {
 	w, h := bounds.Width-6, bounds.Height-6
 	if w > 78 {
 		w = 78
@@ -279,9 +285,28 @@ func (s *Settings) Draw(screen tcell.Screen, bounds layout.Region, focused bool)
 	if h > 30 {
 		h = 30
 	}
+	return w, h
+}
+
+func (s *Settings) contentRegion() layout.Region {
+	inner := s.innerRegion()
+	return layout.Region{Left: inner.Left, Top: inner.Top + 2, Width: inner.Width, Height: inner.Height - 3}
+}
+
+func (s *Settings) innerRegion() layout.Region {
+	w, h := settingsBoxSize(s.bounds)
+	return components.CenteredBoxRegion(s.bounds, w, h)
+}
+
+func (s *Settings) Draw(screen tcell.Screen, bounds layout.Region, focused bool) {
+	th := styles.Current()
+	components.DrawModalBackdrop(screen, bounds)
+	s.bounds = bounds
+
+	w, h := settingsBoxSize(bounds)
 	inner := components.DrawCenteredBox(screen, bounds, w, h, "Settings")
 
-	s.tabs.Draw(screen, inner.Left+1, inner.Top, s.focus == settingsFocusTabs)
+	s.tabs.Draw(screen, inner.Left+1, inner.Top, inner.Width-2, s.focus == settingsFocusTabs)
 
 	if s.sub != nil {
 		s.sub.Draw(screen, inner, true)
@@ -306,6 +331,8 @@ func (s *Settings) Draw(screen tcell.Screen, bounds layout.Region, focused bool)
 		s.plugins.Draw(screen, content, contentFocused)
 	case tabPermissions:
 		s.permissions.Draw(screen, content, contentFocused)
+	case tabMemory:
+		s.memory.Draw(screen, content, contentFocused)
 	case tabSystem:
 		s.system.Draw(screen, content, contentFocused)
 	}
@@ -319,4 +346,58 @@ func (s *Settings) Draw(screen tcell.Screen, bounds layout.Region, focused bool)
 	} else {
 		components.DrawFooter(screen, inner, "↑ tabs  Esc close")
 	}
+}
+
+func (s *Settings) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	if s.sub != nil {
+		if m, ok := s.sub.(components.MouseComponent); ok {
+			return m.HandleMouse(x, y, buttons)
+		}
+		return false
+	}
+	if s.bounds.Width == 0 {
+		return false
+	}
+	inner := s.innerRegion()
+	box := layout.Region{Left: inner.Left - 1, Top: inner.Top - 1, Width: inner.Width + 2, Height: inner.Height + 2}
+
+	if buttons&tcell.ButtonPrimary != 0 && !inRegion(box, x, y) {
+		if s.onClose != nil {
+			s.onClose()
+		}
+		return true
+	}
+
+	if buttons&tcell.ButtonPrimary != 0 && y == inner.Top {
+		if idx, ok := s.tabs.HandleMouse(x, y); ok {
+			s.tab = tabKind(idx)
+			s.tabs.SetActive(idx)
+			s.tabs.SetFocused(true)
+			s.focus = settingsFocusTabs
+			return true
+		}
+	}
+
+	content := s.contentRegion()
+	switch s.tab {
+	case tabGeneral:
+		return s.general.HandleMouse(x, y, content, buttons)
+	case tabSession:
+		return s.session.HandleMouse(x, y, content, buttons)
+	case tabMCP:
+		return s.mcp.HandleMouse(x, y, buttons)
+	case tabSkills:
+		return s.skills.HandleMouse(x, y, buttons)
+	case tabRules:
+		return s.rules.HandleMouse(x, y, buttons)
+	case tabPlugins:
+		return s.plugins.HandleMouse(x, y, buttons)
+	case tabPermissions:
+		return s.permissions.HandleMouse(x, y, content, buttons)
+	case tabMemory:
+		return s.memory.HandleMouse(x, y, content, buttons)
+	case tabSystem:
+		return s.system.HandleMouse(x, y, content, buttons)
+	}
+	return false
 }

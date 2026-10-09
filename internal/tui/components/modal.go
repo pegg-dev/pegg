@@ -3,8 +3,8 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 func DrawModalBackdrop(s tcell.Screen, bounds layout.Region) {
@@ -12,11 +12,24 @@ func DrawModalBackdrop(s tcell.Screen, bounds layout.Region) {
 	FillRegion(s, bounds, ' ', th.Base().Background(th.Background))
 }
 
-func DrawCenteredBox(s tcell.Screen, outer layout.Region, w, h int, title string) layout.Region {
-	th := styles.Current()
+func centeredBox(outer layout.Region, w, h int) (box, inner layout.Region) {
 	w = min(w, outer.Width)
 	h = min(h, outer.Height)
-	box := layout.CenterIn(outer, w, h)
+	box = layout.CenterIn(outer, w, h)
+	if box.Width < 2 || box.Height < 2 {
+		return box, box
+	}
+	return box, layout.Pad(box, 1, 1)
+}
+
+func CenteredBoxRegion(outer layout.Region, w, h int) layout.Region {
+	_, inner := centeredBox(outer, w, h)
+	return inner
+}
+
+func DrawCenteredBox(s tcell.Screen, outer layout.Region, w, h int, title string) layout.Region {
+	th := styles.Current()
+	box, inner := centeredBox(outer, w, h)
 	if box.Width < 2 || box.Height < 2 {
 		return box
 	}
@@ -27,7 +40,7 @@ func DrawCenteredBox(s tcell.Screen, outer layout.Region, w, h int, title string
 		t := " " + TruncateTo(title, box.Width-6) + " "
 		DrawText(s, box.Left+2, box.Top, t, th.Base().Foreground(th.Accent).Background(th.InputBg))
 	}
-	return layout.Pad(box, 1, 1)
+	return inner
 }
 
 func DrawFooter(s tcell.Screen, bounds layout.Region, text string) {

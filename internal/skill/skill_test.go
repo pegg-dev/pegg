@@ -8,7 +8,7 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
+	"github.com/peggco/pegg/internal/agent"
 )
 
 func writeSkill(t *testing.T, dir, name, content string) {

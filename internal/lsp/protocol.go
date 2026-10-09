@@ -2,9 +2,10 @@ package lsp
 
 import (
 	"fmt"
+
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/lsp/diagnostic"
+	"github.com/peggco/pegg/internal/lsp/diagnostic"
 )
 
 type Diagnostic = diagnostic.Diagnostic

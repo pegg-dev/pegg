@@ -19,6 +19,10 @@ type Client struct {
 	baseURL      string
 	timeout      time.Duration
 	maxBodyBytes int64
+
+	authHeader string
+	authFn     func(context.Context) (string, error)
+	refreshFn  func(context.Context) error
 }
 
 const defaultMaxBodyBytes int64 = 10 << 20
@@ -67,6 +71,19 @@ func WithAPIKey(apiKey string) Option {
 	}
 }
 
+func WithAuthHeader(name string, fn func(context.Context) (string, error)) Option {
+	return func(c *Client) {
+		c.authHeader = name
+		c.authFn = fn
+	}
+}
+
+func WithRefresh(fn func(context.Context) error) Option {
+	return func(c *Client) {
+		c.refreshFn = fn
+	}
+}
+
 func (c *Client) buildRequest(ctx context.Context, method, path string, body any) (*http.Request, error) {
 	var bodyReader io.Reader
 	if body != nil {
@@ -90,6 +107,16 @@ func (c *Client) buildRequest(ctx context.Context, method, path string, body any
 		req.Header.Set(key, value)
 	}
 
+	if c.authFn != nil && c.authHeader != "" {
+		value, err := c.authFn(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if value != "" {
+			req.Header.Set(c.authHeader, value)
+		}
+	}
+
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -98,6 +125,10 @@ func (c *Client) buildRequest(ctx context.Context, method, path string, body any
 }
 
 func (c *Client) Do(ctx context.Context, method, path string, body any, result any) error {
+	return c.do(ctx, method, path, body, result, c.refreshFn != nil)
+}
+
+func (c *Client) do(ctx context.Context, method, path string, body any, result any, canRetry bool) error {
 	req, err := c.buildRequest(ctx, method, path, body)
 	if err != nil {
 		return err
@@ -112,6 +143,12 @@ func (c *Client) Do(ctx context.Context, method, path string, body any, result a
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, c.maxBodyBytes+1))
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized && canRetry {
+		if rerr := c.refreshFn(ctx); rerr == nil {
+			return c.do(ctx, method, path, body, result, false)
+		}
 	}
 
 	if resp.StatusCode >= 400 {
@@ -151,6 +188,10 @@ func (e *HTTPError) Temporary() bool {
 }
 
 func (c *Client) DoStream(ctx context.Context, path string, body any, handler func(line []byte) error) error {
+	return c.doStream(ctx, path, body, handler, c.refreshFn != nil)
+}
+
+func (c *Client) doStream(ctx context.Context, path string, body any, handler func(line []byte) error, canRetry bool) error {
 	req, err := c.buildRequest(ctx, http.MethodPost, path, body)
 	if err != nil {
 		return err
@@ -166,6 +207,11 @@ func (c *Client) DoStream(ctx context.Context, path string, body any, handler fu
 
 	if resp.StatusCode >= 400 {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, c.maxBodyBytes+1))
+		if resp.StatusCode == http.StatusUnauthorized && canRetry {
+			if rerr := c.refreshFn(ctx); rerr == nil {
+				return c.doStream(ctx, path, body, handler, false)
+			}
+		}
 		if int64(len(respBody)) > c.maxBodyBytes {
 			respBody = respBody[:c.maxBodyBytes]
 		}

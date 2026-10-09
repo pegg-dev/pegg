@@ -3,7 +3,7 @@ package components
 import (
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 func TestRenderMarkdownHeading(t *testing.T) {

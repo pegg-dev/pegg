@@ -133,12 +133,12 @@ func TestAccessAppliesToReadsAndWrites(t *testing.T) {
 	}
 }
 
-func TestGlobalVesvaiPathsAreWritable(t *testing.T) {
+func TestGlobalPeggPathsAreWritable(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	fs := newTestFS(t)
 
-	cfg := filepath.Join(home, ".vesvai", "vesvai.json")
+	cfg := filepath.Join(home, ".pegg", "pegg.json")
 	if _, err := fs.Write(cfg, []byte(`{"theme":"dark"}`)); err != nil {
 		t.Fatalf("write global config: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestGlobalVesvaiPathsAreWritable(t *testing.T) {
 		t.Fatalf("global config = %q, err = %v", data, err)
 	}
 
-	skill := filepath.Join(home, ".vesvai", "skills", "demo", "SKILL.md")
+	skill := filepath.Join(home, ".pegg", "skills", "demo", "SKILL.md")
 	if _, err := fs.Write(skill, []byte("# demo\n")); err != nil {
 		t.Fatalf("write global skill: %v", err)
 	}
@@ -155,14 +155,14 @@ func TestGlobalVesvaiPathsAreWritable(t *testing.T) {
 	}
 }
 
-func TestGlobalVesvaiOtherPathsStayDenied(t *testing.T) {
+func TestGlobalPeggOtherPathsStayDenied(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	fs := newTestFS(t)
 
 	for _, p := range []string{
-		filepath.Join(home, ".vesvai", "secrets.env"),
-		filepath.Join(home, ".vesvai", "skills-other", "x"),
+		filepath.Join(home, ".pegg", "secrets.env"),
+		filepath.Join(home, ".pegg", "skills-other", "x"),
 		filepath.Join(home, "elsewhere", "file"),
 	} {
 		if _, err := fs.Write(p, []byte("x")); !errors.Is(err, ErrOutOfBounds) {

@@ -1,10 +1,11 @@
 package openai
 
 import (
-	json "github.com/goccy/go-json"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func TestParseContent_JSONString(t *testing.T) {

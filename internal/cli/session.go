@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 func (c *CLI) newSessionCommand() *cobra.Command {

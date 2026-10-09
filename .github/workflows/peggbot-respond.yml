@@ -1,0 +1,33 @@
+name: Peggbot Respond
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  respond:
+    if: contains(github.event.comment.body, '@peggbot')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run peggbot
+        uses: peggco/peggbot@v0.2
+        with:
+          mode: respond
+          token: ${{ secrets.GITHUB_TOKEN }}
+          llm-provider: ${{ secrets.PEGGBOT_PROVIDER }}
+          llm-model: ${{ secrets.PEGGBOT_MODEL }}
+          llm-api-key: ${{ secrets.PEGGBOT_API_KEY }}
+          prompt-file: .github/prompts/respond.md
+          issue-number: ${{ github.event.issue.number }}
+          required-permission: admin
+          unauthorized-action: skip
+          bot-login: peggbot
+          max-iterations: '40'
+          timeout-minutes: '15'

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 type Manager struct {
@@ -193,6 +193,55 @@ func (m *Manager) Fork(sourceID, atMessageID string) (*Session, error) {
 	return &fork, nil
 }
 
+func (m *Manager) ForkBefore(sourceID, atMessageID string) (*Session, error) {
+	src, err := m.store.Get(sourceID)
+	if err != nil {
+		return nil, err
+	}
+	msgs, err := m.store.Messages(sourceID)
+	if err != nil {
+		return nil, err
+	}
+	idx := -1
+	for i, mm := range msgs {
+		if mm.ID == atMessageID {
+			idx = i
+			break
+		}
+	}
+	if idx == -1 {
+		return nil, ErrMessageNotFound
+	}
+
+	now := time.Now()
+	fork := *src
+	fork.ID = uuid.NewString()
+	fork.Title = src.Title + " - fork"
+	fork.ParentID = src.ID
+	fork.CreatedAt = now
+	fork.UpdatedAt = now
+	fork.Usage = llm.Usage{}
+	if err := m.store.Create(fork); err != nil {
+		return nil, err
+	}
+	for i, mm := range msgs[:idx] {
+		cp := mm
+		cp.ID = uuid.NewString()
+		cp.SessionID = fork.ID
+		cp.Seq = i + 1
+		cp.CreatedAt = now
+		if err := m.store.InsertMessage(cp); err != nil {
+			return nil, err
+		}
+	}
+	m.publish(TopicSessionForked, SessionForked{
+		SessionID:       fork.ID,
+		ParentID:        src.ID,
+		ParentMessageID: atMessageID,
+	})
+	return &fork, nil
+}
+
 func (m *Manager) Revert(sessionID, toMessageID string) (string, error) {
 	sess, err := m.store.Get(sessionID)
 	if err != nil {
@@ -240,6 +289,55 @@ func (m *Manager) Revert(sessionID, toMessageID string) (string, error) {
 		SnapshotID:  snap.ID,
 	})
 	return snap.ID, nil
+}
+
+func (m *Manager) RevertFrom(sessionID, fromMessageID string) (string, []Message, error) {
+	sess, err := m.store.Get(sessionID)
+	if err != nil {
+		return "", nil, err
+	}
+	msgs, err := m.store.Messages(sessionID)
+	if err != nil {
+		return "", nil, err
+	}
+	found := false
+	for _, mm := range msgs {
+		if mm.ID == fromMessageID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", nil, ErrMessageNotFound
+	}
+
+	removed, err := m.store.TruncateFrom(sessionID, fromMessageID)
+	if err != nil {
+		return "", nil, err
+	}
+	if len(removed) == 0 {
+		return "", nil, nil
+	}
+
+	snap := Snapshot{
+		ID:            uuid.NewString(),
+		SessionID:     sessionID,
+		HeadMessageID: fromMessageID,
+		CreatedAt:     time.Now(),
+		Messages:      removed,
+	}
+	if err := m.store.SaveSnapshot(snap); err != nil {
+		return "", nil, err
+	}
+
+	sess.UpdatedAt = snap.CreatedAt
+	_ = m.store.Update(*sess)
+	m.publish(TopicSessionReverted, SessionReverted{
+		SessionID:   sessionID,
+		ToMessageID: fromMessageID,
+		SnapshotID:  snap.ID,
+	})
+	return snap.ID, removed, nil
 }
 
 func (m *Manager) UndoRevert(sessionID, snapshotID string) error {

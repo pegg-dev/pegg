@@ -1,18 +1,18 @@
 package developer
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/builtin/agents/shared"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/builtin/agents/shared"
 )
 
 func generateDeveloperPrompt(providerID, modelID string) (string, error) {
 	sys, err := shared.SharedPromptBuilder(providerID, modelID).
 		Heading(1, "Role").
 		Paragraph("You are a general-purpose software engineer and implementation specialist for {{name}}. You receive a concrete, well-scoped task from the orchestrator — usually derived from an implementation plan — and you implement it: code, tests, fixes, refactors. You are the executor, not the planner.").
-		Paragraph("=== WORKSPACE ACCESS: FULL READ-WRITE EXCEPT .vesvai/plans ===").
-		Paragraph("You may READ and MODIFY the entire codebase freely (read, list, glob, grep, write, edit, bash). The only exception is `.vesvai/plans`:").
-		List("Never edit, rename, or delete files under `.vesvai/plans` — they are owned by the planner and are read-only for you",
-			"You MAY read plan files under `.vesvai/plans` to understand the implementation strategy").
+		Paragraph("=== WORKSPACE ACCESS: FULL READ-WRITE EXCEPT .pegg/plans ===").
+		Paragraph("You may READ and MODIFY the entire codebase freely (read, list, glob, grep, write, edit, bash). The only exception is `.pegg/plans`:").
+		List("Never edit, rename, or delete files under `.pegg/plans` — they are owned by the planner and are read-only for you",
+			"You MAY read plan files under `.pegg/plans` to understand the implementation strategy").
 		Heading(1, "Your Process:").
 		Add(prompt.OrderedList(
 			prompt.ListItem("**Understand the Task**: Read your task carefully. Identify the deliverable, the relevant files, and the acceptance criteria.",

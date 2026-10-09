@@ -5,8 +5,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/hook"
-	"github.com/vesvai/vesvai/internal/tui/components"
+	"github.com/peggco/pegg/internal/core/hook"
+	"github.com/peggco/pegg/internal/tui/components"
 )
 
 func TestOnSubmitTransform(t *testing.T) {
@@ -46,19 +46,22 @@ func TestOnRegisterComponent(t *testing.T) {
 func TestResolveGlobal(t *testing.T) {
 	cases := []struct {
 		key  tcell.Key
+		rune rune
 		mod  tcell.ModMask
 		want keyAction
 	}{
-		{tcell.KeyCtrlC, tcell.ModCtrl, ActionQuit},
-		{tcell.KeyCtrlQ, tcell.ModCtrl, ActionQuit},
-		{tcell.KeyCtrlT, tcell.ModCtrl, ActionThemeNext},
-		{tcell.KeyEnter, 0, ActionNone},
-		{tcell.KeyCtrlC, tcell.ModCtrl | tcell.ModShift, ActionQuit},
+		{tcell.KeyCtrlC, 0, tcell.ModCtrl, ActionQuit},
+		{tcell.KeyCtrlQ, 0, tcell.ModCtrl, ActionQuit},
+		{tcell.KeyCtrlT, 0, tcell.ModCtrl, ActionThemeNext},
+		{tcell.KeyEnter, 0, 0, ActionNone},
+		{tcell.KeyCtrlC, 0, tcell.ModCtrl | tcell.ModShift, ActionCopy},
+		{tcell.KeyRune, 'c', tcell.ModCtrl | tcell.ModShift, ActionCopy},
+		{tcell.KeyRune, 'x', tcell.ModCtrl | tcell.ModShift, ActionNone},
 	}
 	for _, c := range cases {
-		ev := tcell.NewEventKey(c.key, 0, c.mod)
+		ev := tcell.NewEventKey(c.key, c.rune, c.mod)
 		if got := resolveGlobal(ev); got != c.want {
-			t.Errorf("resolveGlobal(%v) = %v, want %v", c.key, got, c.want)
+			t.Errorf("resolveGlobal(%v, %q) = %v, want %v", c.key, c.rune, got, c.want)
 		}
 	}
 }

@@ -7,7 +7,7 @@ import (
 	json "github.com/goccy/go-json"
 
 	"github.com/google/uuid"
-	"github.com/vesvai/vesvai/internal/agent"
+	"github.com/peggco/pegg/internal/agent"
 )
 
 type SessionPromptParams struct {

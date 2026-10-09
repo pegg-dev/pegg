@@ -5,10 +5,10 @@ import (
 	"maps"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	openaidriver "github.com/vesvai/vesvai/internal/llm/drivers/openai"
-	"github.com/vesvai/vesvai/internal/utils/random"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	openaidriver "github.com/peggco/pegg/internal/llm/drivers/openai"
+	"github.com/peggco/pegg/internal/utils/random"
 )
 
 const (

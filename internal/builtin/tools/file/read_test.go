@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func setupTestVFS(t *testing.T, files map[string]string) *vfs.VFS {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 func TestChatAppendAndSelect(t *testing.T) {
@@ -400,6 +400,29 @@ func lineText(l Line) string {
 		b.WriteRune(c.R)
 	}
 	return b.String()
+}
+
+func TestChatErrorWrapsLongMessage(t *testing.T) {
+	styles.RegisterDefaults()
+	styles.Set("dark")
+	c := NewChat()
+	it := &ChatItem{Kind: ItemError, Text: strings.Repeat("boom ", 10)}
+	lines := c.itemLines(it, 20)
+	if len(lines) < 2 {
+		t.Fatalf("expected the error to wrap, got %d line(s)", len(lines))
+	}
+	for _, l := range lines {
+		if l.Width() > 20 {
+			t.Fatalf("error line %q exceeds width 20", lineText(l))
+		}
+	}
+	joined := ""
+	for _, l := range lines {
+		joined += lineText(l)
+	}
+	if strings.Count(joined, "boom") != 10 {
+		t.Fatalf("error text lost while wrapping: %q", joined)
+	}
 }
 
 func BenchmarkChatStreamingDraw(b *testing.B) {

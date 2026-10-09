@@ -1,0 +1,31 @@
+name: Peggbot Release Notes
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Run peggbot
+        uses: peggco/peggbot@v0.2
+        with:
+          mode: release-notes
+          token: ${{ secrets.GITHUB_TOKEN }}
+          llm-provider: ${{ secrets.PEGGBOT_PROVIDER }}
+          llm-model: ${{ secrets.PEGGBOT_MODEL }}
+          llm-api-key: ${{ secrets.PEGGBOT_API_KEY }}
+          prompt-file: .github/prompts/release-notes.md
+          release-id: ${{ github.event.release.id }}
+          max-iterations: '40'
+          timeout-minutes: '15'

@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
 )
 
 type SessionResolver func() (provider, model string, ok bool)
@@ -273,11 +274,18 @@ func (m *Manager) resolveAndLoad(ctx context.Context, cfg config.LLMConfig) (str
 		return name, nil, nil, err
 	}
 
-	if cached, ok := m.loadCachedModels(name); ok {
-		cached = m.enrichWithConfig(name, cached)
-		m.storeEntry(name, cfg, prov, cached)
-		m.log.Fdebug("llm: provider %q loaded %d models from cache", name, len(cached))
-		return name, prov, cached, nil
+	skipCache := false
+	if s, ok := prov.(interface{ SkipModelCache() bool }); ok {
+		skipCache = s.SkipModelCache()
+	}
+
+	if !skipCache {
+		if cached, ok := m.loadCachedModels(name); ok {
+			cached = m.enrichWithConfig(name, cached)
+			m.storeEntry(name, cfg, prov, cached)
+			m.log.Fdebug("llm: provider %q loaded %d models from cache", name, len(cached))
+			return name, prov, cached, nil
+		}
 	}
 	models, err := prov.ListModels(ctx)
 	if err != nil {
@@ -406,11 +414,30 @@ func (m *Manager) preferred(provider string) SelectResult {
 		if provider != "" && name != provider {
 			continue
 		}
+		for _, mdl := range e.models {
+			if isFreeModel(mdl) {
+				return SelectResult{Provider: name, Model: mdl}
+			}
+		}
+	}
+
+	for name, e := range m.entries {
+		if e.system {
+			continue
+		}
+		if provider != "" && name != provider {
+			continue
+		}
 		if len(e.models) > 0 {
 			return SelectResult{Provider: name, Model: e.models[0]}
 		}
 	}
 	return SelectResult{Err: errors.New("llm: no models cached")}
+}
+
+func isFreeModel(m Model) bool {
+	return strings.Contains(strings.ToLower(m.Name), "free") ||
+		strings.Contains(strings.ToLower(m.ID), "free")
 }
 
 func (m *Manager) Provider(name string) (Provider, error) {

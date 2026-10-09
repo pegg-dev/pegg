@@ -1,19 +1,19 @@
 package skills
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func RuleSkill() *prompt.Prompt {
 	return prompt.New().
 		Hr(3).
 		Paragraph("name: rule").
-		Paragraph("description: Creates or updates a rule file in the project `.vesvai/rules/` or global `~/.vesvai/rules/` directory. Rules are loaded into every future conversation, so Vesvai keeps following them. Use when the user asks to add a rule, save a preference or convention, or wants Vesvai to remember something across conversations.").
+		Paragraph("description: Creates or updates a rule file in the project `.pegg/rules/` or global `~/.pegg/rules/` directory. Rules are loaded into every future conversation, so Pegg keeps following them. Use when the user asks to add a rule, save a preference or convention, or wants Pegg to remember something across conversations.").
 		Paragraph("when_to_use: Use when the user explicitly asks to create, update, or remove a rule; when the user says something like \"remember this\", \"always do X\", \"never do Y\", or \"add a rule\"; or when the user repeatedly emphasizes a preference or correction that should be persisted as guidance.").
 		Paragraph("context: inline").
 		Hr(3).
 		Heading(1, "Rule Creation").
-		Paragraph("Create or update a rule file that is injected into every future conversation. Rules are loaded from `<project>/.vesvai/rules/*.md` (project scope) and `~/.vesvai/rules/*.md` (global scope), in alphabetical filename order, and take effect immediately.").
+		Paragraph("Create or update a rule file that is injected into every future conversation. Rules are loaded from `<project>/.pegg/rules/*.md` (project scope) and `~/.pegg/rules/*.md` (global scope), in alphabetical filename order, and take effect immediately.").
 		Heading(2, "Step 1: Determine the rule content").
 		OrderedList(
 			prompt.ListItem("If the user stated the rule explicitly (e.g. \"always use tabs\", \"never commit .env\"), use their words. Do not paraphrase away specifics.",
@@ -26,8 +26,8 @@ func RuleSkill() *prompt.Prompt {
 		).
 		Heading(2, "Step 2: Determine the scope").
 		OrderedList(
-			"Project rule: write to `<project>/.vesvai/rules/`. Choose this by default when the rule is specific to this codebase (its language, framework, layout, or workflow).",
-			"Global rule: write to `~/.vesvai/rules/`. Choose this when the rule is a general preference that applies to every project (coding style, commit style, how to handle secrets).",
+			"Project rule: write to `<project>/.pegg/rules/`. Choose this by default when the rule is specific to this codebase (its language, framework, layout, or workflow).",
+			"Global rule: write to `~/.pegg/rules/`. Choose this when the rule is a general preference that applies to every project (coding style, commit style, how to handle secrets).",
 			"If the scope is not clear from the user's request, ask with `askuserquestion`: select type with options \"Project (this repo only)\" and \"Global (all projects)\".",
 		).
 		Heading(2, "Step 3: Choose the filename").

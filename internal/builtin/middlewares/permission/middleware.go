@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	agentmw "github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/core/config"
-	decisionapi "github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	agentmw "github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/core/config"
+	decisionapi "github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type Mode string

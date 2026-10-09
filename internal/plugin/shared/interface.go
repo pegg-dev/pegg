@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 type Deps struct {

@@ -6,14 +6,14 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/agent/middlewares"
-	"github.com/vesvai/vesvai/internal/agent/reminder"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/agent/middlewares"
+	"github.com/peggco/pegg/internal/agent/reminder"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 const DefaultMaxIterations = 150
@@ -25,6 +25,7 @@ type Agent struct {
 	Name            string
 	Description     string
 	ParentAgentID   string
+	RouterManaged   bool
 	DisplayName     string
 	Model           llm.Model
 	Provider        llm.Provider
@@ -88,6 +89,7 @@ func (a *Agent) Clone(name string) *Agent {
 		WithBus(a.Bus),
 	)
 	c.log = a.log
+	c.RouterManaged = a.RouterManaged
 	c.chain = a.chain.Clone()
 	for _, t := range a.Tools.List() {
 		_ = c.Tools.Register(t)

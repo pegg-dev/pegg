@@ -3,9 +3,9 @@ package settings
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/skill"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/skill"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 type skillsTab struct {
@@ -36,6 +36,10 @@ func (t *skillsTab) rebuild() {
 
 func (t *skillsTab) HandleKey(ev *tcell.EventKey) bool {
 	return t.list.HandleKey(ev)
+}
+
+func (t *skillsTab) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	return t.list.HandleMouse(x, y, buttons)
 }
 
 func (t *skillsTab) Draw(s tcell.Screen, bounds layout.Region, focused bool) {

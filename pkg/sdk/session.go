@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 type CreateSessionOptions struct {

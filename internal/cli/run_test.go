@@ -9,26 +9,27 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/builtin/agents/orchestrator"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/compaction"
-	"github.com/vesvai/vesvai/internal/builtin/tools/ask"
-	"github.com/vesvai/vesvai/internal/builtin/tools/loadskill"
-	"github.com/vesvai/vesvai/internal/builtin/tools/plan"
-	"github.com/vesvai/vesvai/internal/builtin/tools/shell"
-	"github.com/vesvai/vesvai/internal/builtin/tools/subagent"
-	"github.com/vesvai/vesvai/internal/builtin/tools/todo"
-	"github.com/vesvai/vesvai/internal/builtin/tools/web"
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/router"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/utils/query"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/builtin/agents/orchestrator"
+	"github.com/peggco/pegg/internal/builtin/middlewares"
+	"github.com/peggco/pegg/internal/builtin/middlewares/compaction"
+	"github.com/peggco/pegg/internal/builtin/tools/ask"
+	"github.com/peggco/pegg/internal/builtin/tools/loadskill"
+	"github.com/peggco/pegg/internal/builtin/tools/plan"
+	"github.com/peggco/pegg/internal/builtin/tools/shell"
+	"github.com/peggco/pegg/internal/builtin/tools/subagent"
+	"github.com/peggco/pegg/internal/builtin/tools/todo"
+	"github.com/peggco/pegg/internal/builtin/tools/web"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/utils/query"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func TestRunRendererEvents(t *testing.T) {
@@ -299,6 +300,7 @@ func newRunTestCLI(t *testing.T) (*CLI, *config.Config, *llm.Manager) {
 	web.WebTools(fs)
 	loadskill.LoadSkillTool(sess)
 	plan.PlanTools(fs)
+	_ = memory.RegisterTools(nil)
 	middlewares.Create(fs, middlewares.Deps{})
 	orchestrator.Register(fs)
 	if _, err := agents.New("orchestrator"); err != nil {
@@ -306,7 +308,7 @@ func newRunTestCLI(t *testing.T) (*CLI, *config.Config, *llm.Manager) {
 	}
 
 	addRunProvider(t, cfg, mgr, "runprov", "m1")
-	return New(bus, cfg, log, fs, sess, mgr, nil, nil, nil, nil), cfg, mgr
+	return New(bus, cfg, log, fs, sess, mgr, nil, nil, nil, nil, nil, nil), cfg, mgr
 }
 
 func addRunProvider(t *testing.T, cfg *config.Config, mgr *llm.Manager, name string, modelIDs ...string) {

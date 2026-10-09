@@ -1,8 +1,8 @@
 version: 2
 
 builds:
-  - main: ./cmd/vesvai
-    binary: vesvai
+  - main: ./cmd/pegg
+    binary: pegg
     env:
       - CGO_ENABLED=0
     goos:

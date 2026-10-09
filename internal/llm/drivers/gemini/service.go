@@ -3,13 +3,14 @@ package gemini
 import (
 	"context"
 	"fmt"
-	json "github.com/goccy/go-json"
 	"strings"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/http"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/http"
 )
 
 type Service struct {

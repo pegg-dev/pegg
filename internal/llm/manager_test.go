@@ -2,14 +2,15 @@ package llm
 
 import (
 	"context"
-	json "github.com/goccy/go-json"
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
 )
 
 type discardHandler struct{}
@@ -117,6 +118,32 @@ func TestManagerPreferredFallback(t *testing.T) {
 	}
 }
 
+func TestManagerPreferredFreeModel(t *testing.T) {
+	mgr, _ := newTestManager(t)
+	registerMockProvider(t, "mgr-free-a", []Model{{ID: "paid-model"}, {ID: "free-model"}})
+	mgr.Sync(context.Background(), []config.LLMConfig{{Provider: "mgr-free-a"}})
+
+	res := mgr.Select(SelectRequest{Mode: SelectModePreferred})
+	if res.Err != nil || res.Model.ID != "free-model" {
+		t.Fatalf("unexpected result: %+v", res)
+	}
+}
+
+func TestManagerPreferredFreeModelAcrossProviders(t *testing.T) {
+	mgr, _ := newTestManager(t)
+	registerMockProvider(t, "mgr-fp-a", []Model{{ID: "a1"}})
+	registerMockProvider(t, "mgr-fp-b", []Model{{ID: "b1"}, {ID: "b2", Name: "Some Free Tier"}})
+	mgr.Sync(context.Background(), []config.LLMConfig{
+		{Provider: "mgr-fp-a"},
+		{Provider: "mgr-fp-b"},
+	})
+
+	res := mgr.Select(SelectRequest{Mode: SelectModePreferred})
+	if res.Err != nil || res.Provider != "mgr-fp-b" || res.Model.ID != "b2" {
+		t.Fatalf("unexpected result: %+v", res)
+	}
+}
+
 func TestManagerPreferredSessionResolver(t *testing.T) {
 	mgr, _ := newTestManager(t)
 	registerMockProvider(t, "mgr-res-a", []Model{{ID: "a1"}, {ID: "a2"}})
@@ -159,6 +186,39 @@ func TestManagerPreferredEmptyCache(t *testing.T) {
 		t.Fatal("expected error for empty cache")
 	}
 }
+
+func TestManagerSkipsModelCache(t *testing.T) {
+	mgr, _, _ := newTestManagerWithCache(t)
+	p := &skipCacheProvider{name: "mgr-skip", models: []Model{{ID: "old"}}}
+	RegisterProvider("mgr-skip", func(config.LLMConfig) (Provider, error) { return p, nil })
+
+	mgr.Sync(context.Background(), []config.LLMConfig{{Provider: "mgr-skip"}})
+	if models, _ := mgr.Models("mgr-skip"); len(models) != 1 || models[0].ID != "old" {
+		t.Fatalf("models = %+v", models)
+	}
+
+	p.models = []Model{{ID: "new1"}, {ID: "new2"}}
+	mgr.Sync(context.Background(), []config.LLMConfig{{Provider: "mgr-skip"}})
+	models, _ := mgr.Models("mgr-skip")
+	if len(models) != 2 || models[0].ID != "new1" {
+		t.Fatalf("models after change = %+v, want the fresh list", models)
+	}
+}
+
+type skipCacheProvider struct {
+	name   string
+	models []Model
+}
+
+func (m *skipCacheProvider) Name() string { return m.name }
+func (m *skipCacheProvider) Chat(context.Context, *Request) (*Response, error) {
+	return &Response{}, nil
+}
+func (m *skipCacheProvider) ChatStream(context.Context, *Request, StreamHandler) error {
+	return nil
+}
+func (m *skipCacheProvider) ListModels(context.Context) ([]Model, error) { return m.models, nil }
+func (m *skipCacheProvider) SkipModelCache() bool                        { return true }
 
 func TestManagerProviderRemoved(t *testing.T) {
 	mgr, _ := newTestManager(t)

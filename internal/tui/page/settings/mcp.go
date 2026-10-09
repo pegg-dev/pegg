@@ -6,10 +6,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/mcp"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/mcp"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 type mcpTab struct {
@@ -70,6 +70,10 @@ func (t *mcpTab) rebuild() {
 
 func (t *mcpTab) HandleKey(ev *tcell.EventKey) bool {
 	return t.list.HandleKey(ev)
+}
+
+func (t *mcpTab) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	return t.list.HandleMouse(x, y, buttons)
 }
 
 func (t *mcpTab) Draw(s tcell.Screen, bounds layout.Region, focused bool) {

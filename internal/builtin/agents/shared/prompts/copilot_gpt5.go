@@ -1,6 +1,6 @@
 package prompts
 
-import "github.com/vesvai/vesvai/internal/agent/prompt"
+import "github.com/peggco/pegg/internal/agent/prompt"
 
 func CopilotGPT5PromptBuilder() *prompt.Prompt {
 	return prompt.New().

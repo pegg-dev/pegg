@@ -12,11 +12,11 @@ import (
 	"github.com/gdamore/tcell/v2"
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/permission"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/builtin/middlewares/permission"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func dbgReadTool(fs *vfs.VFS) tool.Tool {

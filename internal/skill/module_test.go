@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func TestMaterializeTo(t *testing.T) {
@@ -86,8 +86,8 @@ func TestSkillifyMaterializesAndLoads(t *testing.T) {
 	if s.Description == "" || s.WhenToUse == "" {
 		t.Fatalf("skillify metadata incomplete: %+v", s)
 	}
-	if !strings.Contains(s.Instructions, ".vesvai/skills/") {
-		t.Error("skillify instructions should reference .vesvai/skills/")
+	if !strings.Contains(s.Instructions, ".pegg/skills/") {
+		t.Error("skillify instructions should reference .pegg/skills/")
 	}
 	if strings.Contains(s.Instructions, ".claude") {
 		t.Error("skillify instructions should not reference .claude")

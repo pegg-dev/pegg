@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/logger"
+	"github.com/peggco/pegg/internal/core/logger"
 )
 
 type Options struct {
@@ -259,7 +259,7 @@ func (v *VFS) writeIgnored(rel string, isDir bool) bool {
 	if wo := v.writeOnlyRel(); wo != "" && rel != wo && !strings.HasPrefix(rel, wo+"/") {
 		return true
 	}
-	if isVesvaiPath(rel) && !isPlansPath(rel) && !isRulesPath(rel) && !isSkillsPath(rel) {
+	if isPeggPath(rel) && !isPlansPath(rel) && !isRulesPath(rel) && !isSkillsPath(rel) {
 		return true
 	}
 	return v.ignorer.Ignored(rel, isDir)

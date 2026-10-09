@@ -1,11 +1,11 @@
 package agents
 
 import (
-	"github.com/vesvai/vesvai/internal/builtin/agents/developer"
-	"github.com/vesvai/vesvai/internal/builtin/agents/explorer"
-	"github.com/vesvai/vesvai/internal/builtin/agents/orchestrator"
-	"github.com/vesvai/vesvai/internal/builtin/agents/planner"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/builtin/agents/developer"
+	"github.com/peggco/pegg/internal/builtin/agents/explorer"
+	"github.com/peggco/pegg/internal/builtin/agents/orchestrator"
+	"github.com/peggco/pegg/internal/builtin/agents/planner"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func Create(fs *vfs.VFS) {

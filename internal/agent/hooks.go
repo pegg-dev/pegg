@@ -3,13 +3,14 @@ package agent
 import (
 	"context"
 
-	"github.com/vesvai/vesvai/internal/core/hook"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/core/hook"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type MessageInput struct {
-	Text  string
-	Calls []llm.ToolCall
+	Text            string
+	Calls           []llm.ToolCall
+	SystemReminders []string
 }
 
 var messageInputHook = hook.NewHook[MessageInput]()

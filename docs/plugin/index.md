@@ -4,28 +4,28 @@ icon: lucide/puzzle
 
 # Plugin System
 
-Vesvai's plugin system allows you to extend its functionality by writing standalone
-Go binaries. Plugins run in separate processes and communicate with Vesvai via RPC,
+Pegg's plugin system allows you to extend its functionality by writing standalone
+Go binaries. Plugins run in separate processes and communicate with Pegg via RPC,
 ensuring isolation and safety.
 
 ## Features
 
 - **Process isolation** — Plugins run in their own processes. A crashing plugin
-  won't bring down Vesvai.
+  won't bring down Pegg.
 - **Simple interface** — Implement a single `Boot` method to receive application
   configuration.
-- **Auto-discovery** — Place executables in `~/.vesvai/plugins/` and they're loaded
+- **Auto-discovery** — Place executables in `~/.pegg/plugins/` and they're loaded
   automatically.
-- **Hot-pluggable** — Add or remove plugins without modifying Vesvai's source code.
+- **Hot-pluggable** — Add or remove plugins without modifying Pegg's source code.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────┐         ┌─────────────────────────┐
-│         Vesvai Host             │         │      Plugin Process     │
+│         Pegg Host             │         │      Plugin Process     │
 │                                 │   RPC   │                         │
 │  plugin.Module()                │◄───────►│  shared.Plugin.Boot()   │
-│    ├─ Scan ~/.vesvai/plugins/   │         │    └─ deps.Config       │
+│    ├─ Scan ~/.pegg/plugins/   │         │    └─ deps.Config       │
 │    ├─ Launch plugin subprocess  │         │                         │
 │    └─ Call Boot(deps)           │         │  Your plugin logic      │
 └─────────────────────────────────┘         └─────────────────────────┘
@@ -45,5 +45,5 @@ See the [Quickstart Guide](quickstart.md) for a step-by-step tutorial.
 
 ## Configuration
 
-See [Plugin Configuration](../vesvai/configurations/plugins.md) for configuration
+See [Plugin Configuration](../pegg/configurations/plugins.md) for configuration
 options.

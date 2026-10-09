@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
 )
 
 func TestToSessionResponse(t *testing.T) {

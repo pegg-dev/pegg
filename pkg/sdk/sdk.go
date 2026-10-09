@@ -9,20 +9,21 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/builtin"
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/router"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/builtin"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 
-	_ "github.com/vesvai/vesvai/internal/decision/providers"
-	_ "github.com/vesvai/vesvai/internal/llm/drivers"
-	_ "github.com/vesvai/vesvai/internal/llm/providers"
+	_ "github.com/peggco/pegg/internal/decision/providers"
+	_ "github.com/peggco/pegg/internal/llm/drivers"
+	_ "github.com/peggco/pegg/internal/llm/providers"
 )
 
 type Options struct {
@@ -46,6 +47,7 @@ type Engine struct {
 	log       *Logger
 	llm       *llm.Manager
 	decisions *decision.Manager
+	memory    *memory.Manager
 	router    *router.Router
 	sessions  *session.Manager
 	rec       *session.Recorder
@@ -119,6 +121,14 @@ func (e *Engine) init() error {
 
 	e.router = router.New(router.Deps{Config: cfg, LLM: e.llm, Decision: e.decisions}, e.log)
 
+	e.memory = memory.New(memory.Deps{
+		Config:   cfg.Memory,
+		LLM:      e.llm,
+		Decision: e.decisions,
+		Bus:      e.bus,
+		Log:      e.log,
+	})
+
 	store, err := e.openSessionStore()
 	if err != nil {
 		return fmt.Errorf("sdk: open session store: %w", err)
@@ -145,7 +155,7 @@ func (e *Engine) init() error {
 
 	if !e.opts.DisableBuiltins {
 		builtinsOnce.Do(func() {
-			_ = builtin.Create(fs, e.sessions, builtin.Options{LLM: e.llm, Decision: e.decisions, Config: cfg, Bus: e.bus})
+			_ = builtin.Create(fs, e.sessions, builtin.Options{LLM: e.llm, Decision: e.decisions, Config: cfg, Bus: e.bus, Memory: e.memory})
 		})
 	}
 
@@ -162,6 +172,9 @@ func (e *Engine) cleanup() {
 	}
 	if e.rec != nil {
 		_ = e.rec.Stop(e.bus)
+	}
+	if e.memory != nil {
+		e.memory.Stop()
 	}
 	if e.llm != nil {
 		e.llm.Shutdown()
@@ -273,7 +286,7 @@ func (e *Engine) openSessionStore() (session.Store, error) {
 	case e.opts.SessionDir != "":
 		return session.NewJSONStoreAt(e.opts.SessionDir)
 	default:
-		dir, err := os.MkdirTemp("", "vesvai-sessions")
+		dir, err := os.MkdirTemp("", "pegg-sessions")
 		if err != nil {
 			return nil, fmt.Errorf("sdk: create temp session dir: %w", err)
 		}

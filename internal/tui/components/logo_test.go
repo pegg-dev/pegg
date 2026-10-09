@@ -4,11 +4,11 @@ import "testing"
 
 func TestLogoGeometry(t *testing.T) {
 	lg := DefaultLogo()
-	if lg.Width != 33 {
-		t.Errorf("DefaultLogo width = %d, want 33", lg.Width)
+	if lg.Width != 24 {
+		t.Errorf("DefaultLogo width = %d, want 24", lg.Width)
 	}
-	if lg.Height != 5 {
-		t.Errorf("DefaultLogo height = %d, want 5", lg.Height)
+	if lg.Height != 6 {
+		t.Errorf("DefaultLogo height = %d, want 6", lg.Height)
 	}
 }
 

@@ -7,9 +7,9 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/http"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/http"
 )
 
 type Service struct {
@@ -27,6 +27,12 @@ type ServiceConfig struct {
 	ForceStream        bool
 	IncludeStreamUsage *bool
 	PathFor            func(endpoint, model string) string
+
+	AuthHeader string
+	AuthToken  func(ctx context.Context) (string, error)
+	Refresh    func(ctx context.Context) error
+
+	Models []llm.Model
 }
 
 func NewService(name string, cfg ServiceConfig) *Service {
@@ -36,7 +42,17 @@ func NewService(name string, cfg ServiceConfig) *Service {
 	}
 
 	opts := []http.Option{http.WithTimeout(timeout)}
-	if cfg.APIKey != "" {
+	switch {
+	case cfg.AuthToken != nil:
+		header := cfg.AuthHeader
+		if header == "" {
+			header = "Authorization"
+		}
+		opts = append(opts, http.WithAuthHeader(header, cfg.AuthToken))
+		if cfg.Refresh != nil {
+			opts = append(opts, http.WithRefresh(cfg.Refresh))
+		}
+	case cfg.APIKey != "":
 		opts = append(opts, http.WithAPIKey(cfg.APIKey))
 	}
 	defaultHeaders := map[string]string{
@@ -61,6 +77,8 @@ func NewService(name string, cfg ServiceConfig) *Service {
 }
 
 func (s *Service) Name() string { return s.name }
+
+func (s *Service) SkipModelCache() bool { return len(s.cfg.Models) > 0 }
 
 func (s *Service) chatPath(model string) string {
 	if s.cfg.PathFor != nil {
@@ -207,6 +225,9 @@ func (s *Service) ChatStream(ctx context.Context, req *llm.Request, handler llm.
 }
 
 func (s *Service) ListModels(ctx context.Context) ([]llm.Model, error) {
+	if len(s.cfg.Models) > 0 {
+		return s.cfg.Models, nil
+	}
 	var resp chatModelsResponse
 	if err := s.httpClient.Do(ctx, "GET", s.modelsPath(), nil, &resp); err != nil {
 		return nil, mapError(err)

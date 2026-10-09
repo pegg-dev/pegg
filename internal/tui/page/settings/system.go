@@ -6,11 +6,11 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/update"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/update"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type systemTab struct {
@@ -45,6 +45,18 @@ func (t *systemTab) HandleKey(ev *tcell.EventKey) bool {
 		}
 	}
 	return false
+}
+
+func (t *systemTab) HandleMouse(x, y int, bounds layout.Region, buttons tcell.ButtonMask) bool {
+	idx := y - bounds.Top
+	if idx < 0 || idx >= systemRowCount {
+		return false
+	}
+	t.index = idx
+	if buttons&tcell.ButtonPrimary != 0 && idx == systemRowCount-1 && !t.checking {
+		t.checkUpdate()
+	}
+	return true
 }
 
 func (t *systemTab) checkUpdate() {

@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/tui"
+	"github.com/peggco/pegg/internal/tui"
 )
 
 func (c *CLI) newTUICommand() *cobra.Command {

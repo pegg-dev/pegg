@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
+	"github.com/peggco/pegg/internal/agent"
 )
 
 const testSessionID = "test-session"

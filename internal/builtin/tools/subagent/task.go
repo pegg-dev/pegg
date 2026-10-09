@@ -7,13 +7,13 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/agent/reminder"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/reminder"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
 )
 
 func backgroundReminder(name string) reminder.Reminder {
@@ -143,6 +143,7 @@ func subAgentTool() tool.Tool {
 						return
 					}
 					sub.SetModelProvider(parent.Model, parent.Provider)
+					sub.RouterManaged = parent.RouterManaged
 					sub.ParentAgentID = parent.ID
 					sub.DisplayName = sa.Name
 
@@ -210,6 +211,7 @@ func subAgentTool() tool.Tool {
 					return
 				}
 				sub.SetModelProvider(parent.Model, parent.Provider)
+				sub.RouterManaged = parent.RouterManaged
 				sub.ParentAgentID = parent.ID
 				sub.DisplayName = sa.Name
 				if parent.Bus != nil {

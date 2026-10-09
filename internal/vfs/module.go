@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vesvai/vesvai/internal/core/logger"
+	"github.com/peggco/pegg/internal/core/logger"
 )
 
 func VFSModule(log *logger.Logger) (*VFS, error) {

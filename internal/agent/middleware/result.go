@@ -1,6 +1,6 @@
 package middleware
 
-import "github.com/vesvai/vesvai/internal/llm"
+import "github.com/peggco/pegg/internal/llm"
 
 type Result struct {
 	AgentName    string

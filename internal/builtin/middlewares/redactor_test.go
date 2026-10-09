@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func TestRedact(t *testing.T) {

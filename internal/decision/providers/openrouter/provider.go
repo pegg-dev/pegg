@@ -7,9 +7,9 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/utils/http"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/utils/http"
 )
 
 const (

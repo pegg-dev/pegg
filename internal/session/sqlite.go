@@ -8,9 +8,9 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/query"
 	_ "modernc.org/sqlite"
 )
 
@@ -297,6 +297,67 @@ func (s *SQLiteStore) TruncateAfter(sessionID, messageID string) ([]Message, err
 	}
 
 	if _, err := tx.Exec("DELETE FROM session_messages WHERE session_id = ? AND seq > ?", sessionID, targetSeq); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return removed, nil
+}
+
+func (s *SQLiteStore) TruncateFrom(sessionID, messageID string) ([]Message, error) {
+	var targetSeq int
+	if err := s.db.QueryRow("SELECT seq FROM session_messages WHERE id = ? AND session_id = ?", messageID, sessionID).Scan(&targetSeq); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrMessageNotFound
+		}
+		return nil, err
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query(
+		"SELECT id, session_id, seq, role, content, reasoning, name, tool_call_id, tool_calls, created_at FROM session_messages WHERE session_id = ? AND seq >= ? ORDER BY seq ASC",
+		sessionID, targetSeq,
+	)
+	if err != nil {
+		return nil, err
+	}
+	var removed []Message
+	for rows.Next() {
+		var m Message
+		var role, content, reasoning, toolCalls string
+		if err := rows.Scan(&m.ID, &m.SessionID, &m.Seq, &role, &content, &reasoning, &m.Name, &m.ToolCallID, &toolCalls, &m.CreatedAt); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		m.Role = llmRole(role)
+		if err := unmarshalJSON(content, &m.Content); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		if err := unmarshalJSON(reasoning, &m.Reasoning); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		if toolCalls != "" {
+			if err := unmarshalJSON(toolCalls, &m.ToolCalls); err != nil {
+				rows.Close()
+				return nil, err
+			}
+		}
+		removed = append(removed, m)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec("DELETE FROM session_messages WHERE session_id = ? AND seq >= ?", sessionID, targetSeq); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(); err != nil {

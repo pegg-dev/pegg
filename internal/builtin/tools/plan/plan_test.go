@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func TestEnterPlanModeAttachesReminder(t *testing.T) {
@@ -72,7 +72,7 @@ func TestPlanModeRestrictsWritesToPlans(t *testing.T) {
 	if _, err := enterplanmodeTool(fs).Execute(ctx, "{}"); err != nil {
 		t.Fatalf("enterplanmode: %v", err)
 	}
-	if _, err := fs.Write(".vesvai/plans/plan.md", []byte("plan")); err != nil {
+	if _, err := fs.Write(".pegg/plans/plan.md", []byte("plan")); err != nil {
 		t.Fatalf("write to plans while in plan mode: %v", err)
 	}
 	if _, err := fs.Write("main.go", []byte("x")); err == nil {

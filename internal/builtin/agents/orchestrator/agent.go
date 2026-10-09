@@ -1,11 +1,11 @@
 package orchestrator
 
 import (
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	_ "github.com/vesvai/vesvai/internal/builtin/middlewares"
-	"github.com/vesvai/vesvai/internal/builtin/tools/file"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	_ "github.com/peggco/pegg/internal/builtin/middlewares"
+	"github.com/peggco/pegg/internal/builtin/tools/file"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func Register(fs *vfs.VFS) {
@@ -24,7 +24,7 @@ func newOrchestratorAgent(fs *vfs.VFS) (*agent.Agent, error) {
 			return sys
 		}),
 		agent.WithTools(file.Tools(fs)...),
-		agent.WithToolNames("askuserquestion", "bash", "task", "taskstatus", "todoread", "todowrite", "webfetch", "websearch", "loadskill", "enterplanmode", "exitplanmode"),
+		agent.WithToolNames("askuserquestion", "bash", "task", "taskstatus", "todoread", "todowrite", "webfetch", "websearch", "loadskill", "enterplanmode", "exitplanmode", "mem-search", "mem-read"),
 		agent.WithMiddlewareNames("loop-detector", "redaction", "retry", "permission", "compaction"),
 	)
 

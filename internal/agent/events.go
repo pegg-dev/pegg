@@ -1,6 +1,6 @@
 package agent
 
-import "github.com/vesvai/vesvai/internal/llm"
+import "github.com/peggco/pegg/internal/llm"
 
 const (
 	TopicAgentStarted         = "agent.started"

@@ -1,8 +1,8 @@
 package web
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func WebTools(fs *vfs.VFS) {

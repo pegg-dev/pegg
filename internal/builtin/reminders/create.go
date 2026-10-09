@@ -1,10 +1,10 @@
 package reminders
 
 import (
-	"github.com/vesvai/vesvai/internal/builtin/reminders/tasks"
-	"github.com/vesvai/vesvai/internal/builtin/reminders/todowrite"
-	"github.com/vesvai/vesvai/internal/builtin/reminders/usage"
-	"github.com/vesvai/vesvai/internal/core/event"
+	"github.com/peggco/pegg/internal/builtin/reminders/tasks"
+	"github.com/peggco/pegg/internal/builtin/reminders/todowrite"
+	"github.com/peggco/pegg/internal/builtin/reminders/usage"
+	"github.com/peggco/pegg/internal/core/event"
 )
 
 func Create(bus event.Bus) error {

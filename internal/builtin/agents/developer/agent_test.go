@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/builtin/tools/shell"
-	"github.com/vesvai/vesvai/internal/builtin/tools/todo"
-	"github.com/vesvai/vesvai/internal/builtin/tools/web"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/builtin/tools/shell"
+	"github.com/peggco/pegg/internal/builtin/tools/todo"
+	"github.com/peggco/pegg/internal/builtin/tools/web"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func newTestFS(t *testing.T) *vfs.VFS {
@@ -55,7 +55,7 @@ func TestDeveloperPromptRenders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"software engineer", ".vesvai/plans", "todowrite", "in_progress", "Report"} {
+	for _, want := range []string{"software engineer", ".pegg/plans", "todowrite", "in_progress", "Report"} {
 		if !strings.Contains(sys, want) {
 			t.Fatalf("prompt missing %q", want)
 		}

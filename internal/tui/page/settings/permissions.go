@@ -7,14 +7,14 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/agent/middlewares"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/permission"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/agent/middlewares"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/builtin/middlewares/permission"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type permPreset int
@@ -245,6 +245,69 @@ func (t *permissionsTab) HandleKey(ev *tcell.EventKey) bool {
 	return false
 }
 
+func (t *permissionsTab) HandleMouse(x, y int, bounds layout.Region, buttons tcell.ButtonMask) bool {
+	t.loadIfNeeded()
+
+	if buttons&tcell.WheelUp != 0 || buttons&tcell.WheelDown != 0 {
+		if len(t.tools) == 0 {
+			return true
+		}
+		t.focus = permFocusTools
+		delta := 1
+		if buttons&tcell.WheelUp != 0 {
+			delta = -1
+		}
+		t.toolIdx += delta
+		if t.toolIdx < 0 {
+			t.toolIdx = 0
+		}
+		if t.toolIdx >= len(t.tools) {
+			t.toolIdx = len(t.tools) - 1
+		}
+		return true
+	}
+
+	row := y - bounds.Top
+	switch row {
+	case 0:
+		t.focus = permFocusPresets
+		if buttons&tcell.ButtonPrimary != 0 {
+			if x < bounds.Left+bounds.Width/3 {
+				t.presetIdx = (t.presetIdx - 1 + len(presetNames)) % len(presetNames)
+			} else if x > bounds.Right()-bounds.Width/3 {
+				t.presetIdx = (t.presetIdx + 1) % len(presetNames)
+			} else {
+				return true
+			}
+			t.applyPreset(permPreset(t.presetIdx))
+		}
+		return true
+	case 1:
+		t.focus = permFocusModel
+		if buttons&tcell.ButtonPrimary != 0 {
+			t.openJudgeModels()
+		}
+		return true
+	case 2:
+		t.focus = permFocusThreshold
+		return true
+	}
+
+	listTop := bounds.Top + 6
+	if y >= listTop && y < bounds.Bottom()-1 {
+		t.focus = permFocusTools
+		idx := t.scroll + (y - listTop)
+		if idx >= 0 && idx < len(t.tools) {
+			t.toolIdx = idx
+			if buttons&tcell.ButtonPrimary != 0 && x > bounds.Right()-14 {
+				t.cycleMode(idx)
+			}
+		}
+		return true
+	}
+	return false
+}
+
 func (t *permissionsTab) Draw(screen tcell.Screen, bounds layout.Region, focused bool) {
 	t.loadIfNeeded()
 	th := styles.Current()
@@ -308,6 +371,9 @@ func (t *permissionsTab) Draw(screen tcell.Screen, bounds layout.Region, focused
 	if t.toolIdx >= t.scroll+visible {
 		t.scroll = t.toolIdx - visible + 1
 	}
+	if t.scroll < 0 {
+		t.scroll = 0
+	}
 
 	headerStyle := th.Base().Foreground(th.Muted).Background(th.InputBg)
 	components.DrawText(screen, bounds.Left+2, listTop, "Tool", headerStyle)
@@ -316,7 +382,7 @@ func (t *permissionsTab) Draw(screen tcell.Screen, bounds layout.Region, focused
 
 	for i := 0; i < visible-1; i++ {
 		idx := t.scroll + i
-		if idx >= len(t.tools) {
+		if idx < 0 || idx >= len(t.tools) {
 			break
 		}
 		tp := t.tools[idx]

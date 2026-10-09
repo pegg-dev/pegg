@@ -6,24 +6,24 @@ import (
 	"testing"
 )
 
-func writeIgnoreFiles(t *testing.T, root, gitignore, vesvaignore string) {
+func writeIgnoreFiles(t *testing.T, root, gitignore, peggignore string) {
 	t.Helper()
 	if gitignore != "" {
 		if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(gitignore), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if vesvaignore != "" {
-		if err := os.WriteFile(filepath.Join(root, ".vesvaignore"), []byte(vesvaignore), 0o644); err != nil {
+	if peggignore != "" {
+		if err := os.WriteFile(filepath.Join(root, ".peggignore"), []byte(peggignore), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
 }
 
-func newTestIgnorer(t *testing.T, gitignore, vesvaignore string) *Ignorer {
+func newTestIgnorer(t *testing.T, gitignore, peggignore string) *Ignorer {
 	t.Helper()
 	root := t.TempDir()
-	writeIgnoreFiles(t, root, gitignore, vesvaignore)
+	writeIgnoreFiles(t, root, gitignore, peggignore)
 	return newIgnorer(root)
 }
 
@@ -133,10 +133,10 @@ func TestIgnoreGitDirAlwaysIgnored(t *testing.T) {
 	}
 }
 
-func TestIgnoreVesvaUnion(t *testing.T) {
+func TestIgnorePeggUnion(t *testing.T) {
 	ig := newTestIgnorer(t, "*.log", "config.template.json\n")
 	if !ig.Ignored("config.template.json", false) {
-		t.Error(".vesvaignore should hide files")
+		t.Error(".peggignore should hide files")
 	}
 	if !ig.Ignored("app.log", false) {
 		t.Error(".gitignore should still apply")

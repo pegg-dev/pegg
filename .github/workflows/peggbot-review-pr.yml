@@ -1,0 +1,36 @@
+name: Peggbot Review PR
+
+on:
+  pull_request:
+    types: [review_requested]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: >-
+      github.event.requested_reviewer != null &&
+      github.event.requested_reviewer.login == 'peggbot' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Run peggbot
+        uses: peggco/peggbot@v0.2
+        with:
+          mode: review-pr
+          token: ${{ secrets.GITHUB_TOKEN }}
+          llm-provider: ${{ secrets.PEGGBOT_PROVIDER }}
+          llm-model: ${{ secrets.PEGGBOT_MODEL }}
+          llm-api-key: ${{ secrets.PEGGBOT_API_KEY }}
+          prompt-file: .github/prompts/review-pr.md
+          pull-request-number: ${{ github.event.pull_request.number }}
+          max-iterations: '80'
+          timeout-minutes: '40'

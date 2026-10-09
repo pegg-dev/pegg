@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	json "github.com/goccy/go-json"
-	"github.com/vesvai/vesvai/internal/core/config"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	json "github.com/goccy/go-json"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 var ErrMissingVar = errors.New("prompt: variable not found")

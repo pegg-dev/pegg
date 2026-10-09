@@ -4,29 +4,30 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vesvai/vesvai/internal/builtin"
-	_ "github.com/vesvai/vesvai/internal/builtin/agents"
-	_ "github.com/vesvai/vesvai/internal/builtin/lsps"
-	"github.com/vesvai/vesvai/internal/builtin/tools/subagent"
-	"github.com/vesvai/vesvai/internal/cli"
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/decision"
-	_ "github.com/vesvai/vesvai/internal/decision/providers"
-	"github.com/vesvai/vesvai/internal/llm"
-	_ "github.com/vesvai/vesvai/internal/llm/drivers"
-	_ "github.com/vesvai/vesvai/internal/llm/providers"
-	"github.com/vesvai/vesvai/internal/lsp"
-	"github.com/vesvai/vesvai/internal/mcp"
-	"github.com/vesvai/vesvai/internal/notification"
-	"github.com/vesvai/vesvai/internal/plugin"
-	"github.com/vesvai/vesvai/internal/router"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/skill"
-	"github.com/vesvai/vesvai/internal/utils/query"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/builtin"
+	_ "github.com/peggco/pegg/internal/builtin/agents"
+	_ "github.com/peggco/pegg/internal/builtin/lsps"
+	"github.com/peggco/pegg/internal/builtin/tools/subagent"
+	"github.com/peggco/pegg/internal/cli"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/decision"
+	_ "github.com/peggco/pegg/internal/decision/providers"
+	"github.com/peggco/pegg/internal/llm"
+	_ "github.com/peggco/pegg/internal/llm/drivers"
+	_ "github.com/peggco/pegg/internal/llm/providers"
+	"github.com/peggco/pegg/internal/lsp"
+	"github.com/peggco/pegg/internal/mcp"
+	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/notification"
+	"github.com/peggco/pegg/internal/plugin"
+	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/skill"
+	"github.com/peggco/pegg/internal/utils/query"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func Run(args []string) error {
@@ -79,6 +80,14 @@ func Run(args []string) error {
 
 	_ = router.New(router.Deps{Config: cfg, LLM: mgr, Decision: decMgr}, log)
 
+	memMgr := memory.New(memory.Deps{
+		Config:   cfg.Memory,
+		LLM:      mgr,
+		Decision: decMgr,
+		Bus:      bus,
+		Log:      log,
+	})
+
 	bus.Publish(event.TopicAppMounted, cfg)
 
 	sess, err := session.SessionModule(cfg.Session, bus, log)
@@ -92,27 +101,10 @@ func Run(args []string) error {
 		if err != nil {
 			return "", "", false
 		}
-		q := query.Query{
-			Page: query.Page{Number: 1, Size: 20},
-			Sort: []query.Sort{{Column: "updated_at", Dir: query.Desc}},
-			Filters: []query.Filter{
-				{Column: "project_dir", Operator: query.OpEqual, Value: dir},
-			},
+		if prov, model, ok := sessionModel(sess, dir); ok {
+			return prov, model, true
 		}
-		sessions, _, err := sess.List(q)
-		if err != nil {
-			return "", "", false
-		}
-		for _, s := range sessions {
-			if subagent.IsSubagentSession(s.ID) {
-				continue
-			}
-			if s.Provider == "" || s.Model == "" {
-				continue
-			}
-			return s.Provider, s.Model, true
-		}
-		return "", "", false
+		return sessionModel(sess, "")
 	})
 
 	rec := session.NewRecorder(sess, log)
@@ -128,7 +120,7 @@ func Run(args []string) error {
 	if err := skill.SkillModule(); err != nil {
 		return fmt.Errorf("bootstrap: init skills: %w", err)
 	}
-	if err := builtin.Create(fs, sess, builtin.Options{LLM: mgr, Decision: decMgr, Config: cfg, Bus: bus}); err != nil {
+	if err := builtin.Create(fs, sess, builtin.Options{LLM: mgr, Decision: decMgr, Config: cfg, Bus: bus, Memory: memMgr}); err != nil {
 		return fmt.Errorf("bootstrap: builtin: %w", err)
 	}
 	log.Finfo("vfs: workspace mounted at %s", fs.Root())
@@ -155,11 +147,37 @@ func Run(args []string) error {
 
 	log.Info("application started")
 
-	app := cli.New(bus, cfg, log, fs, sess, mgr, mcpMgr, lspMgr, cacheStore, pluginMgr)
+	app := cli.New(bus, cfg, log, fs, sess, mgr, decMgr, memMgr, mcpMgr, lspMgr, cacheStore, pluginMgr)
 	if err := app.Execute(args); err != nil {
 		return fmt.Errorf("bootstrap: cli: %w", err)
 	}
 
 	log.Info("application stopped")
 	return nil
+}
+
+func sessionModel(sess *session.Manager, dir string) (string, string, bool) {
+	q := query.Query{
+		Page: query.Page{Number: 1, Size: 20},
+		Sort: []query.Sort{{Column: "updated_at", Dir: query.Desc}},
+	}
+	if dir != "" {
+		q.Filters = []query.Filter{
+			{Column: "project_dir", Operator: query.OpEqual, Value: dir},
+		}
+	}
+	sessions, _, err := sess.List(q)
+	if err != nil {
+		return "", "", false
+	}
+	for _, s := range sessions {
+		if subagent.IsSubagentSession(s.ID) {
+			continue
+		}
+		if s.Provider == "" || s.Model == "" {
+			continue
+		}
+		return s.Provider, s.Model, true
+	}
+	return "", "", false
 }

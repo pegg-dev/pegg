@@ -3,8 +3,8 @@ package mcp
 import (
 	"fmt"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/logger"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/logger"
 )
 
 func Module(global map[string]config.MCPServerConfig, log *logger.Logger) (*Manager, error) {

@@ -3,7 +3,7 @@ package middlewares
 import (
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func contentMsg(s string) *llm.Message {

@@ -3,9 +3,9 @@ package lsp
 import (
 	"fmt"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func Module(global map[string]config.LanguageServerConfig, fs *vfs.VFS, log *logger.Logger) (*Manager, error) {

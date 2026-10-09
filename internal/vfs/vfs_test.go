@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/lsp/diagnostic"
+	"github.com/peggco/pegg/internal/lsp/diagnostic"
 )
 
 func newTestVFS(t *testing.T, root string) *VFS {
@@ -548,22 +548,22 @@ func TestScopedAccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	plans, err := fs.Scoped(".vesvai/plans")
+	plans, err := fs.Scoped(".pegg/plans")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := plans.Write(".vesvai/plans/plan.md", []byte("plan")); err != nil {
+	if _, err := plans.Write(".pegg/plans/plan.md", []byte("plan")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := plans.Read(".vesvai/plans/plan.md"); err != nil {
+	if _, err := plans.Read(".pegg/plans/plan.md"); err != nil {
 		t.Fatalf("read inside scope: %v", err)
 	}
 
 	if _, err := plans.Read("main.go"); !errors.Is(err, ErrOutOfBounds) {
 		t.Fatalf("read outside scope: got %v, want ErrOutOfBounds", err)
 	}
-	if _, err := plans.Write(".vesvai/plans/../plan.md", []byte("x")); !errors.Is(err, ErrOutOfBounds) {
+	if _, err := plans.Write(".pegg/plans/../plan.md", []byte("x")); !errors.Is(err, ErrOutOfBounds) {
 		t.Fatalf("traversal write: got %v, want ErrOutOfBounds", err)
 	}
 	if _, err := plans.Read("/etc/hostname"); !errors.Is(err, ErrOutOfBounds) {
@@ -577,13 +577,13 @@ func TestScopedAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(root, ".vesvai", "plans")
+	want := filepath.Join(root, ".pegg", "plans")
 	if dot != want {
 		t.Fatalf("Resolve(.) = %q, want %q", dot, want)
 	}
 
-	virtual := plans.Virtual(filepath.Join(root, ".vesvai", "plans", "plan.md"))
-	if virtual != ".vesvai/plans/plan.md" {
+	virtual := plans.Virtual(filepath.Join(root, ".pegg", "plans", "plan.md"))
+	if virtual != ".pegg/plans/plan.md" {
 		t.Fatalf("Virtual = %q", virtual)
 	}
 
@@ -608,40 +608,40 @@ func TestScopedInvalid(t *testing.T) {
 
 func TestScopedBypassesIgnoreInsideScope(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".vesvai/\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".pegg/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	fs := newTestVFS(t, root)
 
-	plans, err := fs.Scoped(".vesvai/plans")
+	plans, err := fs.Scoped(".pegg/plans")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := plans.Write(".vesvai/plans/plan.md", []byte("plan")); err != nil {
+	if _, err := plans.Write(".pegg/plans/plan.md", []byte("plan")); err != nil {
 		t.Fatalf("write in gitignored scope: %v", err)
 	}
-	if _, err := plans.Read(".vesvai/plans/plan.md"); err != nil {
+	if _, err := plans.Read(".pegg/plans/plan.md"); err != nil {
 		t.Fatalf("read in gitignored scope: %v", err)
 	}
 
-	if data, err := fs.Read(".vesvai/plans/plan.md"); err != nil {
+	if data, err := fs.Read(".pegg/plans/plan.md"); err != nil {
 		t.Fatalf("plans dir must be accessible from root despite ignore: %v", err)
 	} else if !strings.Contains(data, "plan") {
 		t.Fatalf("plans read = %q, want plan content", data)
 	}
 
-	if err := os.MkdirAll(filepath.Join(root, ".vesvai", "sessions"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".pegg", "sessions"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, ".vesvai", "sessions", "secret.txt"), []byte("session-data"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".pegg", "sessions", "secret.txt"), []byte("session-data"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if data, err := fs.Read(".vesvai/sessions/secret.txt"); err != nil {
-		t.Fatalf("all .vesvai paths must be readable: %v", err)
+	if data, err := fs.Read(".pegg/sessions/secret.txt"); err != nil {
+		t.Fatalf("all .pegg paths must be readable: %v", err)
 	} else if !strings.Contains(data, "session-data") {
 		t.Fatalf("sessions read = %q", data)
 	}
-	if _, err := fs.Write(".vesvai/sessions/other.txt", []byte("x")); !errors.Is(err, ErrIgnored) {
+	if _, err := fs.Write(".pegg/sessions/other.txt", []byte("x")); !errors.Is(err, ErrIgnored) {
 		t.Fatalf("writing outside plans must be blocked: got %v, want ErrIgnored", err)
 	}
 }
@@ -653,7 +653,7 @@ func TestWriteScopeReadsWholeRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	plans, err := fs.WriteScope(".vesvai/plans")
+	plans, err := fs.WriteScope(".pegg/plans")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -671,20 +671,20 @@ func TestWriteScopeReadsWholeRoot(t *testing.T) {
 		t.Fatalf("grep: %v, %v", res, err)
 	}
 
-	if _, err := plans.Write(".vesvai/plans/spec-1.md", []byte("spec")); err != nil {
+	if _, err := plans.Write(".pegg/plans/spec-1.md", []byte("spec")); err != nil {
 		t.Fatalf("write into write scope: %v", err)
 	}
-	if _, err := plans.Read(".vesvai/plans/spec-1.md"); err != nil {
+	if _, err := plans.Read(".pegg/plans/spec-1.md"); err != nil {
 		t.Fatalf("read back from write scope: %v", err)
 	}
 
 	if _, err := plans.Write("main.go", []byte("x")); !errors.Is(err, ErrOutOfBounds) {
 		t.Fatalf("write outside write scope: got %v, want ErrOutOfBounds", err)
 	}
-	if _, err := plans.Write(".vesvai/plans/../main.go", []byte("x")); !errors.Is(err, ErrOutOfBounds) {
+	if _, err := plans.Write(".pegg/plans/../main.go", []byte("x")); !errors.Is(err, ErrOutOfBounds) {
 		t.Fatalf("traversal write: got %v, want ErrOutOfBounds", err)
 	}
-	if err := plans.Delete(".vesvai/plans/spec-1.md"); err != nil {
+	if err := plans.Delete(".pegg/plans/spec-1.md"); err != nil {
 		t.Fatalf("delete inside write scope: %v", err)
 	}
 	if err := plans.Delete("main.go"); !errors.Is(err, ErrOutOfBounds) {
@@ -706,103 +706,103 @@ func TestWriteScopeReadsWholeRoot(t *testing.T) {
 
 func TestWriteScopeIgnoresGitignoreInsideScope(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".vesvai/\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".pegg/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	fs := newTestVFS(t, root)
 
-	plans, err := fs.WriteScope(".vesvai/plans")
+	plans, err := fs.WriteScope(".pegg/plans")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := plans.Write(".vesvai/plans/plan.md", []byte("plan")); err != nil {
+	if _, err := plans.Write(".pegg/plans/plan.md", []byte("plan")); err != nil {
 		t.Fatalf("write in gitignored scope: %v", err)
 	}
-	if _, err := plans.Read(".vesvai/plans/plan.md"); err != nil {
+	if _, err := plans.Read(".pegg/plans/plan.md"); err != nil {
 		t.Fatalf("read in gitignored scope: %v", err)
 	}
 
-	if data, err := fs.Read(".vesvai/plans/plan.md"); err != nil {
+	if data, err := fs.Read(".pegg/plans/plan.md"); err != nil {
 		t.Fatalf("plans dir must be accessible from root despite ignore: %v", err)
 	} else if !strings.Contains(data, "plan") {
 		t.Fatalf("plans read = %q, want plan content", data)
 	}
 
-	if err := os.MkdirAll(filepath.Join(root, ".vesvai", "sessions"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".pegg", "sessions"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, ".vesvai", "sessions", "secret.txt"), []byte("session-data"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".pegg", "sessions", "secret.txt"), []byte("session-data"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if data, err := fs.Read(".vesvai/sessions/secret.txt"); err != nil {
-		t.Fatalf("all .vesvai paths must be readable: %v", err)
+	if data, err := fs.Read(".pegg/sessions/secret.txt"); err != nil {
+		t.Fatalf("all .pegg paths must be readable: %v", err)
 	} else if !strings.Contains(data, "session-data") {
 		t.Fatalf("sessions read = %q", data)
 	}
-	if _, err := fs.Write(".vesvai/sessions/other.txt", []byte("x")); !errors.Is(err, ErrIgnored) {
+	if _, err := fs.Write(".pegg/sessions/other.txt", []byte("x")); !errors.Is(err, ErrIgnored) {
 		t.Fatalf("writing outside plans must be blocked: got %v, want ErrIgnored", err)
 	}
 }
 
-func TestVesvaiReadableButOnlyPlansRulesAndSkillsWritable(t *testing.T) {
+func TestPeggReadableButOnlyPlansRulesAndSkillsWritable(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".vesvai/\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".pegg/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join(root, ".vesvai"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".pegg"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, ".vesvai", "permissions.json"), []byte(`{"allowed":{}}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".pegg", "permissions.json"), []byte(`{"allowed":{}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	fs := newTestVFS(t, root)
 
-	if data, err := fs.Read(".vesvai/permissions.json"); err != nil {
-		t.Fatalf("read .vesvai file: %v", err)
+	if data, err := fs.Read(".pegg/permissions.json"); err != nil {
+		t.Fatalf("read .pegg file: %v", err)
 	} else if !strings.Contains(data, "allowed") {
-		t.Fatalf("read .vesvai file = %q", data)
+		t.Fatalf("read .pegg file = %q", data)
 	}
-	if res, err := fs.List(".vesvai"); err != nil || len(res.Entries) == 0 {
-		t.Fatalf("list .vesvai: %v %+v", err, res.Entries)
+	if res, err := fs.List(".pegg"); err != nil || len(res.Entries) == 0 {
+		t.Fatalf("list .pegg: %v %+v", err, res.Entries)
 	}
-	if got, err := fs.Grep("allowed", ".vesvai", nil, GrepModeFilesWithMatches, 0); err != nil || len(got) != 1 || got[0].Path != ".vesvai/permissions.json" {
-		t.Fatalf("grep .vesvai: %v %v", got, err)
+	if got, err := fs.Grep("allowed", ".pegg", nil, GrepModeFilesWithMatches, 0); err != nil || len(got) != 1 || got[0].Path != ".pegg/permissions.json" {
+		t.Fatalf("grep .pegg: %v %v", got, err)
 	}
 
-	if _, err := fs.Write(".vesvai/plans/spec-1.md", []byte("spec")); err != nil {
+	if _, err := fs.Write(".pegg/plans/spec-1.md", []byte("spec")); err != nil {
 		t.Fatalf("write into plans: %v", err)
 	}
-	if data, err := fs.Read(".vesvai/plans/spec-1.md"); err != nil {
+	if data, err := fs.Read(".pegg/plans/spec-1.md"); err != nil {
 		t.Fatalf("read plans: %v", err)
 	} else if !strings.Contains(data, "spec") {
 		t.Fatalf("read plans = %q, want spec content", data)
 	}
 
-	if _, err := fs.Write(".vesvai/rules/01-testing.md", []byte("# Testing\n")); err != nil {
+	if _, err := fs.Write(".pegg/rules/01-testing.md", []byte("# Testing\n")); err != nil {
 		t.Fatalf("write into rules: %v", err)
 	}
-	if data, err := fs.Read(".vesvai/rules/01-testing.md"); err != nil {
+	if data, err := fs.Read(".pegg/rules/01-testing.md"); err != nil {
 		t.Fatalf("read rules: %v", err)
 	} else if !strings.Contains(data, "# Testing") {
 		t.Fatalf("read rules = %q, want rule content", data)
 	}
 
-	if _, err := fs.Write(".vesvai/skills/demo/SKILL.md", []byte("# Demo\n")); err != nil {
+	if _, err := fs.Write(".pegg/skills/demo/SKILL.md", []byte("# Demo\n")); err != nil {
 		t.Fatalf("write into skills: %v", err)
 	}
-	if data, err := fs.Read(".vesvai/skills/demo/SKILL.md"); err != nil {
+	if data, err := fs.Read(".pegg/skills/demo/SKILL.md"); err != nil {
 		t.Fatalf("read skills: %v", err)
 	} else if !strings.Contains(data, "# Demo") {
 		t.Fatalf("read skills = %q, want skill content", data)
 	}
 
-	if _, err := fs.Write(".vesvai/permissions.json", []byte("{}")); !errors.Is(err, ErrIgnored) {
+	if _, err := fs.Write(".pegg/permissions.json", []byte("{}")); !errors.Is(err, ErrIgnored) {
 		t.Fatalf("write outside plans/rules/skills: got %v, want ErrIgnored", err)
 	}
-	if _, err := fs.Edit(".vesvai/permissions.json", "allowed", "denied", false); !errors.Is(err, ErrIgnored) {
+	if _, err := fs.Edit(".pegg/permissions.json", "allowed", "denied", false); !errors.Is(err, ErrIgnored) {
 		t.Fatalf("edit outside plans/rules/skills: got %v, want ErrIgnored", err)
 	}
-	if err := fs.Delete(".vesvai/permissions.json"); !errors.Is(err, ErrIgnored) {
+	if err := fs.Delete(".pegg/permissions.json"); !errors.Is(err, ErrIgnored) {
 		t.Fatalf("delete outside plans/rules/skills: got %v, want ErrIgnored", err)
 	}
 }

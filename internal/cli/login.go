@@ -9,9 +9,10 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/llm/subscription"
 )
 
 func (c *CLI) newLoginCommand() *cobra.Command {
@@ -44,6 +45,10 @@ func (c *CLI) runLogin(provider, apiKey string, selectProvider func() (string, e
 		return fmt.Errorf("cli: unknown provider %q (available: %v)", provider, llm.ListProviders())
 	}
 
+	if info, ok := subscription.Get(provider); ok {
+		return c.loginSubscription(provider, info)
+	}
+
 	if apiKey == "" {
 		key, err := promptAPIKey()
 		if err != nil {
@@ -67,6 +72,70 @@ func (c *CLI) runLogin(provider, apiKey string, selectProvider func() (string, e
 
 	c.log.Finfo("provider %q saved", provider)
 
+	return nil
+}
+
+func (c *CLI) loginSubscription(provider string, info subscription.Info) error {
+	st := info.Status()
+	if !st.LoggedIn {
+		return fmt.Errorf("cli: %s subscription is not signed in — %s", provider, info.Hint)
+	}
+
+	cfg := config.LLMConfig{Provider: provider}
+	if err := c.syncProvider(cfg); err != nil {
+		return err
+	}
+	if err := config.UpsertProvider(cfg); err != nil {
+		return fmt.Errorf("cli: save provider %q: %w", provider, err)
+	}
+	c.log.Finfo("provider %q (subscription) saved", provider)
+	return nil
+}
+
+func (c *CLI) newLogoutCommand() *cobra.Command {
+	var provider string
+
+	cmd := &cobra.Command{
+		Use:   "logout",
+		Short: "Remove a subscription provider from pegg (does not sign out the official CLI)",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return c.runLogout(provider)
+		},
+	}
+	cmd.Flags().StringVar(&provider, "provider", "", "subscription provider to remove")
+	return cmd
+}
+
+func (c *CLI) runLogout(provider string) error {
+	if provider == "" {
+		cfg, err := config.Load()
+		if err != nil {
+			return fmt.Errorf("cli: load config: %w", err)
+		}
+		var names []string
+		for _, p := range cfg.Providers {
+			if subscription.IsSubscription(p.Provider) {
+				names = append(names, p.Provider)
+			}
+		}
+		switch len(names) {
+		case 0:
+			return errors.New("cli: no subscription providers configured")
+		case 1:
+			provider = names[0]
+		default:
+			return fmt.Errorf("cli: multiple subscription providers configured (%v); pass --provider", names)
+		}
+	}
+
+	if !subscription.IsSubscription(provider) {
+		return fmt.Errorf("cli: %q is not a subscription provider", provider)
+	}
+	if err := config.RemoveProvider(provider); err != nil {
+		return err
+	}
+	c.log.Finfo("provider %q removed (official CLI credentials untouched)", provider)
 	return nil
 }
 

@@ -1,6 +1,6 @@
 package session
 
-import "github.com/vesvai/vesvai/internal/llm"
+import "github.com/peggco/pegg/internal/llm"
 
 func MessagesToLLM(msgs []Message) []llm.Message {
 	out := make([]llm.Message, 0, len(msgs))

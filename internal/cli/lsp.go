@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/lsp"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/lsp"
 )
 
 const (

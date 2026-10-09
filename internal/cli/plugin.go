@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/plugin"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/plugin"
 )
 
 func (c *CLI) newPluginCommand() *cobra.Command {
@@ -45,7 +45,7 @@ func (c *CLI) newPluginListCommand() *cobra.Command {
 				fmt.Fprintln(cmd.OutOrStdout(), "No plugins installed.")
 				fmt.Fprintln(cmd.OutOrStdout())
 				home, _ := os.UserHomeDir()
-				pluginDir := filepath.Join(home, ".vesvai", "plugins")
+				pluginDir := filepath.Join(home, ".pegg", "plugins")
 				fmt.Fprintf(cmd.OutOrStdout(), "Plugin directory: %s\n", pluginDir)
 				return nil
 			}

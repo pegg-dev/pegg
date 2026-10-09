@@ -529,7 +529,7 @@ func TestSkillChipVisualWidthMatchesDraw(t *testing.T) {
 	in := NewInput()
 	in.InsertChip("go-development")
 	got := in.visualLineWidth("/go-development")
-	want := len("/go-development") // drawn as "/"+name
+	want := len("/go-development")
 	if got != want {
 		t.Errorf("visualLineWidth = %d, want %d (drawn width)", got, want)
 	}
@@ -656,5 +656,92 @@ func TestSerializeChipsExpandsLongTextAfterSkillChip(t *testing.T) {
 	expected := "/plan" + long
 	if got != expected {
 		t.Errorf("Value len=%d, want len=%d", len(got), len(expected))
+	}
+}
+
+func inputWRows(in *Input, width int) []string {
+	var rows []string
+	for _, s := range in.wrapLines(width) {
+		rs := []rune(in.lines[s.lineIdx])
+		rows = append(rows, string(rs[s.start:s.end]))
+	}
+	return rows
+}
+
+func TestInputWrapBreaksAtSpaces(t *testing.T) {
+	in := NewInput()
+	in.lines = []string{"hello tasarım"}
+	got := inputWRows(in, 10)
+	want := []string{"hello ", "tasarım"}
+	if len(got) != len(want) {
+		t.Fatalf("rows = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("row %d = %q, want %q (all %q)", i, got[i], want[i], got)
+		}
+	}
+}
+
+func TestInputWrapHardBreaksOverlongWord(t *testing.T) {
+	in := NewInput()
+	in.lines = []string{"abcdefghijkl"}
+	got := inputWRows(in, 5)
+	if strings.Join(got, "") != "abcdefghijkl" {
+		t.Fatalf("hard wrap lost characters: %q", got)
+	}
+	for _, r := range got {
+		if in.visualLineWidth(r) > 5 {
+			t.Fatalf("row %q exceeds width 5", r)
+		}
+	}
+}
+
+func TestInputVisualRowOfFollowsWordWrap(t *testing.T) {
+	in := NewInput()
+	in.SetInnerWidth(10)
+	in.lines = []string{"hello tasarım world"}
+	cases := []struct{ col, want int }{
+		{0, 0}, {5, 0}, {6, 1}, {7, 1}, {14, 2}, {19, 2},
+	}
+	for _, c := range cases {
+		if got := in.visualRowOf(0, c.col); got != c.want {
+			t.Errorf("visualRowOf(0,%d) = %d, want %d", c.col, got, c.want)
+		}
+	}
+}
+
+func TestInputSetValue(t *testing.T) {
+	in := NewInput()
+	in.InsertRune('x')
+	in.SetValue("line1\nline2")
+	if in.Value() != "line1\nline2" {
+		t.Fatalf("Value = %q, want multiline", in.Value())
+	}
+	if in.Row() != 1 || in.Col() != 5 {
+		t.Fatalf("cursor = %d,%d, want 1,5", in.Row(), in.Col())
+	}
+	in.SetValue("")
+	if in.Value() != "" || in.Row() != 0 || in.Col() != 0 {
+		t.Fatalf("after empty SetValue: value=%q row=%d col=%d", in.Value(), in.Row(), in.Col())
+	}
+}
+
+func TestInputMoveUpDownFollowsWordWrap(t *testing.T) {
+	in := NewInput()
+	in.SetInnerWidth(10)
+	for _, r := range "hello tasarım world" {
+		in.InsertRune(r)
+	}
+	if in.Col() != 19 {
+		t.Fatalf("setup col = %d, want 19", in.Col())
+	}
+	in.MoveUp()
+	if in.Row() != 0 || in.Col() != 11 {
+		t.Fatalf("after MoveUp row,col = %d,%d, want 0,11", in.Row(), in.Col())
+	}
+	in.MoveDown()
+	if in.Row() != 0 || in.Col() != 19 {
+		t.Fatalf("after MoveDown row,col = %d,%d, want 0,19", in.Row(), in.Col())
 	}
 }

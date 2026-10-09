@@ -3,7 +3,7 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 type Component interface {
@@ -20,4 +20,9 @@ type Focusable interface {
 	Focus()
 	Blur()
 	Focused() bool
+}
+
+type MouseComponent interface {
+	Component
+	HandleMouse(x, y int, buttons tcell.ButtonMask) bool
 }

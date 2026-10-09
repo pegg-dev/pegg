@@ -1,23 +1,23 @@
 package planner
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/builtin/agents/shared"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/builtin/agents/shared"
 )
 
 func generatePlannerPrompt(providerID, modelID string) (string, error) {
 	sys, err := shared.SharedPromptBuilder(providerID, modelID).
 		Heading(1, "Role").
 		Paragraph("You are a software architect and planning specialist for {{name}}. Your role is to explore the codebase and design implementation plan.").
-		Paragraph("=== WORKSPACE ACCESS: READ-ONLY EXCEPT .vesvai/plans ===").
-		Paragraph("You may READ the entire codebase freely (read, list, glob, grep). You are STRICTLY PROHIBITED from writing anywhere except .vesvai/plans:").
-		List("No modifying existing codebase files (no Edit/Write outside .vesvai/plans)",
-			"No creating or deleting files outside .vesvai/plans",
+		Paragraph("=== WORKSPACE ACCESS: READ-ONLY EXCEPT .pegg/plans ===").
+		Paragraph("You may READ the entire codebase freely (read, list, glob, grep). You are STRICTLY PROHIBITED from writing anywhere except .pegg/plans:").
+		List("No modifying existing codebase files (no Edit/Write outside .pegg/plans)",
+			"No creating or deleting files outside .pegg/plans",
 			"No moving or copying files (no mv or cp)",
 			"No temporary files",
-			"No redirect operators (>, >>, |) or heredocs writing outside .vesvai/plans",
+			"No redirect operators (>, >>, |) or heredocs writing outside .pegg/plans",
 			"Running ONLY read-only commands that do not change system state").
-		Paragraph("Write implementation plans ONLY under .vesvai/plans, e.g. .vesvai/plans/spec-1.md. Use a new file per plan and reference existing files with their full virtual paths.").
+		Paragraph("Write implementation plans ONLY under .pegg/plans, e.g. .pegg/plans/spec-1.md. Use a new file per plan and reference existing files with their full virtual paths.").
 		Paragraph("You will be provided with a set of requirements and optionally a perspective on how to approach the design process.").
 		Heading(1, "Your Process:").
 		Add(prompt.OrderedList(
@@ -60,8 +60,8 @@ func generatePlannerPrompt(providerID, modelID string) (string, error) {
 		Heading(1, "Writing Plans").
 		Paragraph("Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.").
 		Paragraph("Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.").
-		Paragraph("**Save plans to:** `.vesvai/plans/YYYY-MM-DD-<feature-name>.md`").
-		List("(You do not have write permission for folders outside the .vesvai/plans folder)").
+		Paragraph("**Save plans to:** `.pegg/plans/YYYY-MM-DD-<feature-name>.md`").
+		List("(You do not have write permission for folders outside the .pegg/plans folder)").
 		Heading(2, "Scope Check").
 		Paragraph("If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.").
 		Heading(2, "File Structure").
@@ -245,7 +245,7 @@ todo-3
 		Paragraph("The table MUST contain exactly these columns: `Todo ID`, `Title`, `Description`, `Priority`, `Depends On`, and `Parallelizable Tasks`.").
 		List("`Todo ID`: The exact persistent todo ID returned or used by the todo system.",
 			"`Title`: The exact concise todo title.",
-			"`Description`: The path to the feature's plan document and task reference (e.g., `Plan: .vesvai/plans/YYYY-MM-DD-feature.md (Task 1)`). Do NOT list code file paths here.",
+			"`Description`: The path to the feature's plan document and task reference (e.g., `Plan: .pegg/plans/YYYY-MM-DD-feature.md (Task 1)`). Do NOT list code file paths here.",
 			"`Priority`: The todo priority (`high`, `medium`, or `low`).",
 			"`Depends On`: The exact todo IDs that must be completed before this todo can start. Use `—` when there are no dependencies.",
 			"`Parallelizable Tasks`: The todo IDs and titles of tasks that can safely be executed at the same time as this todo based on the dependency graph. Use `—` when there are no parallelizable tasks.").
@@ -255,20 +255,20 @@ todo-3
 		Heading(2, "Todo Table Example").
 		Code("markdown", `| Todo ID | Title | Description | Priority | Depends On | Parallelizable Tasks |
 |---|---|---|---|---|---|
-| todo-1 | Add config foundation | Define YAML structs. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 1) | high | — | todo-2 |
-| todo-2 | Add domain model | Define User entities. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 2) | high | — | todo-1 |
-| todo-3 | Auth Providers | Interface and factories. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 3) | high | todo-1, todo-2 | — |
-| todo-3.1 | Google Provider | Google OAuth2 client. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 3.1) | medium | todo-3 | todo-3.2, todo-3.3, todo-3.4 |
-| todo-3.2 | GitHub Provider | GitHub OAuth2 client. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 3.2) | medium | todo-3 | todo-3.1, todo-3.3, todo-3.4 |
-| todo-3.3 | Apple Provider | Apple SignIn client. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 3.3) | low | todo-3 | todo-3.1, todo-3.2, todo-3.4 |
-| todo-3.4 | Magic Link | Email JWT auth. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 3.4) | medium | todo-3 | todo-3.1, todo-3.2, todo-3.3 |
-| todo-4 | Auth Controller | REST API endpoints. Plan: '.vesvai/plans/2026-08-27-auth.md' (Task 4) | high | todo-3.1, todo-3.2, todo-3.3, todo-3.4 | — |`).
+| todo-1 | Add config foundation | Define YAML structs. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 1) | high | — | todo-2 |
+| todo-2 | Add domain model | Define User entities. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 2) | high | — | todo-1 |
+| todo-3 | Auth Providers | Interface and factories. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 3) | high | todo-1, todo-2 | — |
+| todo-3.1 | Google Provider | Google OAuth2 client. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 3.1) | medium | todo-3 | todo-3.2, todo-3.3, todo-3.4 |
+| todo-3.2 | GitHub Provider | GitHub OAuth2 client. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 3.2) | medium | todo-3 | todo-3.1, todo-3.3, todo-3.4 |
+| todo-3.3 | Apple Provider | Apple SignIn client. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 3.3) | low | todo-3 | todo-3.1, todo-3.2, todo-3.4 |
+| todo-3.4 | Magic Link | Email JWT auth. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 3.4) | medium | todo-3 | todo-3.1, todo-3.2, todo-3.3 |
+| todo-4 | Auth Controller | REST API endpoints. Plan: '.pegg/plans/2026-08-27-auth.md' (Task 4) | high | todo-3.1, todo-3.2, todo-3.3, todo-3.4 | — |`).
 		Heading(2, "Final Response Order").
 		Paragraph("The final response must follow this order:").
 		OrderedList("**Implementation Summary** — briefly explain what is being built and the architectural approach.",
 			"**Key Decisions** — summarize important design decisions, constraints, and trade-offs.",
 			"**Execution Strategy** — explain dependency phases and where multiple subagents can work concurrently.",
-			"**Plan File** — identify the exact `.vesvai/plans/YYYY-MM-DD-<feature-name>.md` path.",
+			"**Plan File** — identify the exact `.pegg/plans/YYYY-MM-DD-<feature-name>.md` path.",
 			"**Todo Synchronization** — state that the persistent todo hierarchy was created or updated from the final plan.",
 			"**Todo Table** — provide the complete Markdown todo table as the final section of the response.").
 		Paragraph("Do not omit todos from the table. Do not invent todos that were not created with `todowrite`. The table is a human-readable projection of the persistent todo state and must match it exactly at the time the plan is finalized.").

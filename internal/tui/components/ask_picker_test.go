@@ -6,7 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 func askKey(k tcell.Key) *tcell.EventKey { return tcell.NewEventKey(k, 0, 0) }

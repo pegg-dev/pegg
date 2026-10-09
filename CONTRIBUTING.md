@@ -1,6 +1,6 @@
-# Contributing to Vesvai
+# Contributing to Pegg
 
-Thanks for your interest in contributing to Vesvai. This guide covers everything you need to know to get up and running, make changes, and submit a pull request that gets merged.
+Thanks for your interest in contributing to Pegg. This guide covers everything you need to know to get up and running, make changes, and submit a pull request that gets merged.
 
 ---
 
@@ -37,9 +37,9 @@ No runtime dependencies. The binary is fully self-contained (`CGO_ENABLED=0`).
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/<your-username>/vesvai.git
-cd vesvai
-git remote add upstream https://github.com/vesvai/vesvai.git
+git clone https://github.com/<your-username>/pegg.git
+cd pegg
+git remote add upstream https://github.com/peggco/pegg.git
 ```
 
 Keep your fork in sync:
@@ -54,8 +54,8 @@ git rebase upstream/main
 ## Project Layout
 
 ```
-vesvai/
-├── cmd/vesvai/          # Main binary entry point
+pegg/
+├── cmd/pegg/          # Main binary entry point
 ├── internal/
 │   ├── agent/           # Orchestrator, subagents, hooks
 │   ├── llm/             # Provider drivers, circuit breakers, rate limits
@@ -67,7 +67,7 @@ vesvai/
 ├── docs/                # Documentation site (zensical)
 ├── assets/              # Static assets (icons, etc.)
 ├── .github/workflows/   # CI/CD pipelines
-├── .vesvai/             # Project config, rules, subagent state
+├── .pegg/             # Project config, rules, subagent state
 ├── Makefile             # Dev commands
 └── go.mod               # Module definition
 ```
@@ -88,7 +88,7 @@ make build
 make run
 
 # Run in debug mode
-VESVAI_DEBUG=1 ./bin/vesvai
+PEGG_DEBUG=1 ./bin/pegg
 ```
 
 ---
@@ -117,8 +117,8 @@ VESVAI_DEBUG=1 ./bin/vesvai
    All four must pass. CI will run them on your PR automatically.
 
 4. **Update documentation** if your change affects user-facing behavior:
-   - CLI flags or commands → update `docs/vesvai/usage/cli.md`
-   - Provider/model changes → update `docs/vesvai/providers-and-models.md`
+   - CLI flags or commands → update `docs/pegg/usage/cli.md`
+   - Provider/model changes → update `docs/pegg/providers-and-models.md`
    - New tool or feature → update the relevant doc under `docs/`
    - SDK API changes → update `docs/sdk/`
 
@@ -187,7 +187,7 @@ Format before every commit. If your PR has formatting changes mixed with logic c
 
 ## Documentation
 
-The docs live in `docs/` and are built with [zensical](https://zensical.dev). The site is published to [docs.vesv.ai](https://docs.vesv.ai).
+The docs live in `docs/` and are built with [zensical](https://zensical.dev). The site is published to [docs.pegg.dev](https://docs.pegg.dev).
 
 ### When to Update Docs
 
@@ -274,14 +274,14 @@ Format:
 
 ## Reporting Issues
 
-Open an issue on [GitHub Issues](https://github.com/vesvai/vesvai/issues). Include:
+Open an issue on [GitHub Issues](https://github.com/peggco/pegg/issues). Include:
 
 - **What you expected** to happen
 - **What actually** happened
 - **Steps to reproduce** the problem
-- **Your environment**: OS, terminal, Go version, Vesvai version
+- **Your environment**: OS, terminal, Go version, Pegg version
 
-For feature requests, use the [Discussions](https://github.com/vesvai/vesvai/discussions) board.
+For feature requests, use the [Discussions](https://github.com/peggco/pegg/discussions) board.
 
 ---
 
@@ -315,10 +315,10 @@ For feature requests, use the [Discussions](https://github.com/vesvai/vesvai/dis
 
 ## License
 
-By contributing to Vesvai, you agree that your contributions will be licensed under the [FSL-1.1-MIT](./LICENSE.md).
+By contributing to Pegg, you agree that your contributions will be licensed under the [FSL-1.1-MIT](./LICENSE.md).
 
 ---
 
 ## Questions?
 
-Join the [Discord](https://discord.gg/vesvai) → `#contributors` channel. We're happy to help you get started.
+Join the [Discord](https://discord.gg/pegg) → `#contributors` channel. We're happy to help you get started.
