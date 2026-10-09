@@ -3,6 +3,7 @@ package ask
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	json "github.com/goccy/go-json"
@@ -63,7 +64,7 @@ func AskTool() {
 								"description": "If true, the user must provide an answer.",
 							},
 						},
-						"required": []string{"id", "question", "type"},
+						"required": []string{"question", "type"},
 					},
 				},
 			},
@@ -77,25 +78,51 @@ type askParams struct {
 	Questions []agent.AskQuestion `json:"questions"`
 }
 
-func executeAsk(ctx context.Context, args string) (string, error) {
+const askExpectedJSON = `{"questions":[{"id":"q1","question":"...","type":"text","required":true},{"id":"q2","question":"...","type":"select","options":["a","b"],"required":false}]}`
+
+func askError(reason string) error {
+	return fmt.Errorf("askuserquestion: %s. Expected JSON: %s", reason, askExpectedJSON)
+}
+
+func parseAskArgs(args string) ([]agent.AskQuestion, error) {
 	var params askParams
 	if err := json.Unmarshal([]byte(args), &params); err != nil {
-		return "", fmt.Errorf("askuserquestion: invalid arguments: %w", err)
+		return nil, askError(fmt.Sprintf("invalid arguments: %v", err))
 	}
-	if len(params.Questions) == 0 {
-		return "", fmt.Errorf("askuserquestion: questions array must not be empty")
+	return validateQuestions(params.Questions)
+}
+
+func validateQuestions(questions []agent.AskQuestion) ([]agent.AskQuestion, error) {
+	if len(questions) == 0 {
+		return nil, askError("questions array must not be empty")
 	}
-	for i := range params.Questions {
-		q := &params.Questions[i]
-		if q.ID == "" {
+	for i := range questions {
+		q := &questions[i]
+		if strings.TrimSpace(q.ID) == "" {
 			q.ID = fmt.Sprintf("q%d", i+1)
 		}
-		if q.Question == "" {
-			return "", fmt.Errorf("askuserquestion: question text is required for all entries")
+		if strings.TrimSpace(q.Question) == "" {
+			return nil, askError(fmt.Sprintf("questions[%d].question is required", i))
 		}
-		if q.Type == "select" && len(q.Options) == 0 {
-			return "", fmt.Errorf("askuserquestion: select questions must provide options")
+		switch strings.ToLower(strings.TrimSpace(q.Type)) {
+		case "text":
+			q.Type = "text"
+		case "select":
+			q.Type = "select"
+			if len(q.Options) == 0 {
+				return nil, askError(fmt.Sprintf("questions[%d] has type \"select\" but no options", i))
+			}
+		default:
+			return nil, askError(fmt.Sprintf("questions[%d].type must be \"text\" or \"select\", got %q", i, q.Type))
 		}
+	}
+	return questions, nil
+}
+
+func executeAsk(ctx context.Context, args string) (string, error) {
+	questions, err := parseAskArgs(args)
+	if err != nil {
+		return "", err
 	}
 
 	parent := agent.FromContext(ctx)
@@ -129,7 +156,7 @@ func executeAsk(ctx context.Context, args string) (string, error) {
 	parent.Bus.Publish(agent.TopicAgentAsk, agent.AgentAsk{
 		AgentID:   parent.ID,
 		AgentName: parent.Name,
-		Questions: params.Questions,
+		Questions: questions,
 	})
 
 	select {

@@ -102,3 +102,68 @@ func TestAskPickerTypedTextVisible(t *testing.T) {
 		t.Fatalf("typed text not visible at height %d:\n%s", h, strings.Join(lines, "\n"))
 	}
 }
+
+func TestAskPickerUnknownTypeFallsBackToText(t *testing.T) {
+	p := NewAskPicker()
+	var got map[string]string
+	sent := false
+	p.SetOnSend(func(answers map[string]string) {
+		got = answers
+		sent = true
+	})
+	p.SetQuestions([]AskQuestion{
+		{ID: "q1", Question: "Which?", Type: "boolean"},
+	})
+	if !p.Active() {
+		t.Fatal("picker should activate for an unknown type")
+	}
+	if p.states[0].field == nil {
+		t.Fatal("unknown type should fall back to a text field")
+	}
+
+	for _, r := range "yes" {
+		p.HandleKey(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone))
+	}
+	p.HandleKey(askKey(tcell.KeyEnter))
+	if p.Active() {
+		t.Fatal("picker should close after Enter")
+	}
+	if !sent || got["q1"] != "yes" {
+		t.Fatalf("answers = %v, want q1=yes", got)
+	}
+}
+
+func TestAskPickerEmptyQuestionsDeactivates(t *testing.T) {
+	p := NewAskPicker()
+	done := false
+	p.SetOnDone(func() { done = true })
+	p.SetQuestions(nil)
+	if p.Active() {
+		t.Fatal("picker must not activate without questions")
+	}
+	if !done {
+		t.Fatal("onDone should be called for empty questions")
+	}
+}
+
+func TestAskPickerEscCancels(t *testing.T) {
+	p := NewAskPicker()
+	var got map[string]string
+	sent := false
+	p.SetOnSend(func(answers map[string]string) {
+		got = answers
+		sent = true
+	})
+	p.SetQuestions([]AskQuestion{
+		{ID: "q1", Question: "Which?", Type: "boolean"},
+	})
+	if !p.HandleKey(askKey(tcell.KeyEsc)) {
+		t.Fatal("Esc should be handled")
+	}
+	if p.Active() {
+		t.Fatal("Esc should cancel the picker")
+	}
+	if !sent || got != nil {
+		t.Fatalf("cancel should send nil answers, got sent=%v answers=%v", sent, got)
+	}
+}

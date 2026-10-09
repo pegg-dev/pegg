@@ -42,6 +42,13 @@ func NewAskPicker() *AskPicker {
 func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 	onSend := a.onSend
 	onDone := a.onDone
+	if len(qs) == 0 {
+		a.Clear()
+		if onDone != nil {
+			onDone()
+		}
+		return
+	}
 	*a = AskPicker{
 		active:    true,
 		questions: qs,
@@ -54,17 +61,6 @@ func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 		q := qs[i]
 		s := &askPS{q: q}
 		switch q.Type {
-		case "text":
-			s.field = NewField("")
-			s.field.SetPlaceholder("Type your answer...")
-			id := q.ID
-			s.field.SetOnEnter(func(val string) {
-				if val != "" {
-					a.answers[id] = val
-				}
-				a.next()
-			})
-			s.field.Focus()
 		case "select":
 			items := make([]ListItem, 0, len(q.Options)+1)
 			for _, opt := range q.Options {
@@ -90,6 +86,17 @@ func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 				}
 				a.answers[id] = item.Label
 				askMarkSelected(s.list, item.Label)
+				a.next()
+			})
+		default:
+			s.q.Type = "text"
+			s.field = NewField("")
+			s.field.SetPlaceholder("Type your answer...")
+			id := q.ID
+			s.field.SetOnEnter(func(val string) {
+				if val != "" {
+					a.answers[id] = val
+				}
 				a.next()
 			})
 		}
@@ -199,6 +206,10 @@ func (a *AskPicker) HandleKey(ev *tcell.EventKey) bool {
 
 	st := a.current()
 	if st == nil {
+		if ev.Key() == tcell.KeyEsc {
+			a.cancel()
+			return true
+		}
 		return false
 	}
 
@@ -214,6 +225,11 @@ func (a *AskPicker) HandleKey(ev *tcell.EventKey) bool {
 		return false
 	}
 
+	if ev.Key() == tcell.KeyEsc {
+		a.cancel()
+		return true
+	}
+
 	if st.field != nil {
 		switch ev.Key() {
 		case tcell.KeyLeft:
@@ -221,9 +237,6 @@ func (a *AskPicker) HandleKey(ev *tcell.EventKey) bool {
 			return true
 		case tcell.KeyRight:
 			a.next()
-			return true
-		case tcell.KeyEsc:
-			a.cancel()
 			return true
 		}
 		if st.field.HandleKey(ev) {
@@ -239,9 +252,6 @@ func (a *AskPicker) HandleKey(ev *tcell.EventKey) bool {
 			return true
 		case tcell.KeyRight:
 			a.next()
-			return true
-		case tcell.KeyEsc:
-			a.cancel()
 			return true
 		}
 		return st.list.HandleKey(ev)
