@@ -52,8 +52,6 @@ func (ld *LineDecoder) Decode() ([]byte, error) {
 				return nil, errors.New("stream: line exceeds maximum size")
 			}
 		}
-		// Read may return the final bytes together with io.EOF; keep the
-		// error until the buffered lines have been handed out one by one.
 		ld.err = err
 	}
 }
