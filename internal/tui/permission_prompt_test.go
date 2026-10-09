@@ -154,6 +154,7 @@ func TestPermissionPromptAllowApproves(t *testing.T) {
 	waitAskOpen(t, app, true)
 
 	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
+	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 	waitAskOpen(t, app, false)
 
 	waitFor(t, 5*time.Second, func() bool {
@@ -192,6 +193,7 @@ func TestPermissionPromptRejectCollectsReason(t *testing.T) {
 	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
 	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
 	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
+	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) && len(asks) < 1 {
@@ -203,6 +205,7 @@ func TestPermissionPromptRejectCollectsReason(t *testing.T) {
 		_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone))
 	}
 	time.Sleep(200 * time.Millisecond)
+	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 	_ = app.screen.PostEvent(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone))
 
 	waitFor(t, 5*time.Second, func() bool {

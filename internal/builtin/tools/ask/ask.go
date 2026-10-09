@@ -3,6 +3,7 @@ package ask
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	json "github.com/goccy/go-json"
@@ -50,20 +51,20 @@ func AskTool() {
 							},
 							"type": map[string]any{
 								"type":        "string",
-								"enum":        []string{"text", "select"},
-								"description": "'text' for free-form input, 'select' for choosing from options.",
+								"enum":        []string{"text", "select", "multiselect", "boolean"},
+								"description": "'text' free-form input; 'select' pick one option; 'multiselect' pick one or more options; 'boolean' yes/no.",
 							},
 							"options": map[string]any{
 								"type":        "array",
 								"items":       map[string]any{"type": "string"},
-								"description": "Required for 'select' type. List of options to choose from.",
+								"description": "Required for 'select' and 'multiselect'. Ignored for other types.",
 							},
 							"required": map[string]any{
 								"type":        "boolean",
 								"description": "If true, the user must provide an answer.",
 							},
 						},
-						"required": []string{"id", "question", "type"},
+						"required": []string{"question", "type"},
 					},
 				},
 			},
@@ -77,25 +78,51 @@ type askParams struct {
 	Questions []agent.AskQuestion `json:"questions"`
 }
 
-func executeAsk(ctx context.Context, args string) (string, error) {
+const askExpectedJSON = `{"questions":[{"id":"q1","question":"...","type":"text","required":true},{"id":"q2","question":"...","type":"select","options":["a","b"]},{"id":"q3","question":"...","type":"multiselect","options":["a","b"]},{"id":"q4","question":"...","type":"boolean"}]}`
+
+func askError(reason string) error {
+	return fmt.Errorf("askuserquestion: %s. Expected JSON: %s", reason, askExpectedJSON)
+}
+
+func parseAskArgs(args string) ([]agent.AskQuestion, error) {
 	var params askParams
 	if err := json.Unmarshal([]byte(args), &params); err != nil {
-		return "", fmt.Errorf("askuserquestion: invalid arguments: %w", err)
+		return nil, askError(fmt.Sprintf("invalid arguments: %v", err))
 	}
-	if len(params.Questions) == 0 {
-		return "", fmt.Errorf("askuserquestion: questions array must not be empty")
+	return validateQuestions(params.Questions)
+}
+
+func validateQuestions(questions []agent.AskQuestion) ([]agent.AskQuestion, error) {
+	if len(questions) == 0 {
+		return nil, askError("questions array must not be empty")
 	}
-	for i := range params.Questions {
-		q := &params.Questions[i]
-		if q.ID == "" {
+	for i := range questions {
+		q := &questions[i]
+		if strings.TrimSpace(q.ID) == "" {
 			q.ID = fmt.Sprintf("q%d", i+1)
 		}
-		if q.Question == "" {
-			return "", fmt.Errorf("askuserquestion: question text is required for all entries")
+		if strings.TrimSpace(q.Question) == "" {
+			return nil, askError(fmt.Sprintf("questions[%d].question is required", i))
 		}
-		if q.Type == "select" && len(q.Options) == 0 {
-			return "", fmt.Errorf("askuserquestion: select questions must provide options")
+		switch typ := strings.ToLower(strings.TrimSpace(q.Type)); typ {
+		case "text", "boolean":
+			q.Type = typ
+		case "select", "multiselect":
+			if len(q.Options) == 0 {
+				return nil, askError(fmt.Sprintf("questions[%d] has type %q but no options", i, typ))
+			}
+			q.Type = typ
+		default:
+			return nil, askError(fmt.Sprintf("questions[%d].type must be one of \"text\", \"select\", \"multiselect\", \"boolean\", got %q", i, q.Type))
 		}
+	}
+	return questions, nil
+}
+
+func executeAsk(ctx context.Context, args string) (string, error) {
+	questions, err := parseAskArgs(args)
+	if err != nil {
+		return "", err
 	}
 
 	parent := agent.FromContext(ctx)
@@ -129,7 +156,7 @@ func executeAsk(ctx context.Context, args string) (string, error) {
 	parent.Bus.Publish(agent.TopicAgentAsk, agent.AgentAsk{
 		AgentID:   parent.ID,
 		AgentName: parent.Name,
-		Questions: params.Questions,
+		Questions: questions,
 	})
 
 	select {
