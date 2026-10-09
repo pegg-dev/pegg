@@ -25,10 +25,10 @@ func (r *Redaction) BeforeLLM(_ context.Context, req *llm.Request) error {
 		return nil
 	}
 	for i := range req.Messages {
-		if req.Messages[i].Role == llm.RoleAssistant {
-			continue
+		switch req.Messages[i].Role {
+		case llm.RoleUser, llm.RoleTool:
+			r.red.redactMessage(&req.Messages[i], false)
 		}
-		r.red.redactMessage(&req.Messages[i], false)
 	}
 	return nil
 }
