@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -33,6 +34,7 @@ type askPS struct {
 	field      *Field
 	list       *List
 	customMode bool
+	multi      bool
 }
 
 func NewAskPicker() *AskPicker {
@@ -62,13 +64,8 @@ func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 		s := &askPS{q: q}
 		switch q.Type {
 		case "select":
-			items := make([]ListItem, 0, len(q.Options)+1)
-			for _, opt := range q.Options {
-				items = append(items, ListItem{Label: opt, Data: opt})
-			}
-			items = append(items, ListItem{Label: "Custom answer...", Data: "__custom__"})
 			s.list = NewList("")
-			s.list.SetItems(items)
+			s.list.SetItems(askOptionItems(q.Options, true))
 			id := q.ID
 			s.list.SetOnSelect(func(_ int, item ListItem) {
 				if label, ok := item.Data.(string); ok && label == "__custom__" {
@@ -85,6 +82,26 @@ func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 					return
 				}
 				a.answers[id] = item.Label
+				askMarkSelected(s.list, item.Label)
+				a.next()
+			})
+		case "multiselect":
+			s.multi = true
+			s.list = NewList("")
+			s.list.SetItems(askOptionItems(q.Options, false))
+			id := q.ID
+			s.list.SetOnSelect(func(idx int, item ListItem) {
+				s.list.SetMarked(idx, !item.Marked)
+				a.answers[id] = askMultiAnswer(s.list)
+			})
+		case "boolean":
+			s.list = NewList("")
+			s.list.SetItems([]ListItem{{Label: "Yes", Data: "yes"}, {Label: "No", Data: "no"}})
+			id := q.ID
+			s.list.SetOnSelect(func(_ int, item ListItem) {
+				if v, ok := item.Data.(string); ok {
+					a.answers[id] = v
+				}
 				askMarkSelected(s.list, item.Label)
 				a.next()
 			})
@@ -105,6 +122,28 @@ func (a *AskPicker) SetQuestions(qs []AskQuestion) {
 		}
 		a.states = append(a.states, s)
 	}
+}
+
+func askOptionItems(options []string, custom bool) []ListItem {
+	items := make([]ListItem, 0, len(options)+1)
+	for _, opt := range options {
+		items = append(items, ListItem{Label: opt, Data: opt})
+	}
+	if custom {
+		items = append(items, ListItem{Label: "Custom answer...", Data: "__custom__"})
+	}
+	return items
+}
+
+func askMultiAnswer(l *List) string {
+	items := l.Items()
+	selected := make([]string, 0, len(items))
+	for _, item := range items {
+		if item.Marked {
+			selected = append(selected, item.Label)
+		}
+	}
+	return strings.Join(selected, ", ")
 }
 
 func askMarkSelected(l *List, label string) {
@@ -254,6 +293,26 @@ func (a *AskPicker) HandleKey(ev *tcell.EventKey) bool {
 			a.next()
 			return true
 		}
+		if st.multi {
+			switch ev.Key() {
+			case tcell.KeyRune:
+				if ev.Rune() == ' ' {
+					if idx := st.list.SelectedIndex(); idx >= 0 {
+						if item, ok := st.list.Selected(); ok {
+							st.list.SetMarked(idx, !item.Marked)
+							a.answers[st.q.ID] = askMultiAnswer(st.list)
+						}
+					}
+					return true
+				}
+			case tcell.KeyEnter:
+				if st.q.Required && a.answers[st.q.ID] == "" {
+					return true
+				}
+				a.next()
+				return true
+			}
+		}
 		return st.list.HandleKey(ev)
 	}
 
@@ -296,8 +355,15 @@ func (a *AskPicker) Draw(s tcell.Screen, bounds layout.Region) {
 
 	fy := inner.Bottom() - 1
 	nav := fmt.Sprintf("  ◀  ▶  Q%d/%d  ", a.tab+1, n)
+	if st.multi {
+		nav = "  [Space] toggle  ◀  ▶  "
+	}
 	if a.tab == n-1 {
-		nav = "  [Enter] Confirm"
+		if st.multi {
+			nav = "  [Space] toggle  [Enter] Confirm"
+		} else {
+			nav = "  [Enter] Confirm"
+		}
 	}
 	DrawText(s, inner.Left, fy, nav, th.Base().Foreground(th.Hint).Background(th.InputBg))
 }

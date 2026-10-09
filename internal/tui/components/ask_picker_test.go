@@ -112,7 +112,7 @@ func TestAskPickerUnknownTypeFallsBackToText(t *testing.T) {
 		sent = true
 	})
 	p.SetQuestions([]AskQuestion{
-		{ID: "q1", Question: "Which?", Type: "boolean"},
+		{ID: "q1", Question: "Which?", Type: "checkbox"},
 	})
 	if !p.Active() {
 		t.Fatal("picker should activate for an unknown type")
@@ -155,7 +155,7 @@ func TestAskPickerEscCancels(t *testing.T) {
 		sent = true
 	})
 	p.SetQuestions([]AskQuestion{
-		{ID: "q1", Question: "Which?", Type: "boolean"},
+		{ID: "q1", Question: "Which?", Type: "checkbox"},
 	})
 	if !p.HandleKey(askKey(tcell.KeyEsc)) {
 		t.Fatal("Esc should be handled")
@@ -165,5 +165,62 @@ func TestAskPickerEscCancels(t *testing.T) {
 	}
 	if !sent || got != nil {
 		t.Fatalf("cancel should send nil answers, got sent=%v answers=%v", sent, got)
+	}
+}
+
+func TestAskPickerMultiSelect(t *testing.T) {
+	p := NewAskPicker()
+	var got map[string]string
+	sent := false
+	p.SetOnSend(func(answers map[string]string) {
+		got = answers
+		sent = true
+	})
+	p.SetQuestions([]AskQuestion{
+		{ID: "tags", Question: "Tags?", Type: "multiselect", Options: []string{"a", "b", "c"}},
+	})
+
+	p.HandleKey(tcell.NewEventKey(tcell.KeyRune, ' ', tcell.ModNone))
+	p.HandleKey(askKey(tcell.KeyDown))
+	p.HandleKey(tcell.NewEventKey(tcell.KeyRune, ' ', tcell.ModNone))
+	p.HandleKey(askKey(tcell.KeyEnter))
+
+	if p.Active() {
+		t.Fatal("picker should close after Enter")
+	}
+	if !sent || got["tags"] != "a, b" {
+		t.Fatalf("answers = %v, want tags=\"a, b\"", got)
+	}
+}
+
+func TestAskPickerMultiSelectRequiredNeedsSelection(t *testing.T) {
+	p := NewAskPicker()
+	p.SetQuestions([]AskQuestion{
+		{ID: "tags", Question: "Tags?", Type: "multiselect", Options: []string{"a", "b"}, Required: true},
+	})
+	if !p.HandleKey(askKey(tcell.KeyEnter)) {
+		t.Fatal("Enter should be handled")
+	}
+	if !p.Active() {
+		t.Fatal("required multiselect must not advance with nothing selected")
+	}
+}
+
+func TestAskPickerBoolean(t *testing.T) {
+	p := NewAskPicker()
+	var got map[string]string
+	p.SetOnSend(func(answers map[string]string) {
+		got = answers
+	})
+	p.SetQuestions([]AskQuestion{
+		{ID: "proceed", Question: "Proceed?", Type: "boolean"},
+	})
+
+	p.HandleKey(askKey(tcell.KeyEnter))
+	if p.Active() {
+		t.Fatal("picker should close after Enter")
+	}
+	if got["proceed"] != "yes" {
+		t.Fatalf("answers = %v, want proceed=yes", got)
 	}
 }

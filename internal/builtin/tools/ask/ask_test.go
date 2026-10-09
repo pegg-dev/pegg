@@ -6,18 +6,24 @@ import (
 )
 
 func TestParseAskArgsDefaultsIDAndNormalizesType(t *testing.T) {
-	qs, err := parseAskArgs(`{"questions":[{"question":"Pick one","type":"SELECT","options":["a","b"]},{"question":"Name?","type":"text"}]}`)
+	qs, err := parseAskArgs(`{"questions":[{"question":"Pick one","type":"SELECT","options":["a","b"]},{"question":"Name?","type":"text"},{"question":"Tags?","type":"MultiSelect","options":["x","y"]},{"question":"Agree?","type":"boolean"}]}`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(qs) != 2 {
-		t.Fatalf("got %d questions, want 2", len(qs))
+	if len(qs) != 4 {
+		t.Fatalf("got %d questions, want 4", len(qs))
 	}
 	if qs[0].ID != "q1" || qs[0].Type != "select" {
 		t.Errorf("q1 = %+v, want id=q1 type=select", qs[0])
 	}
 	if qs[1].ID != "q2" || qs[1].Type != "text" {
 		t.Errorf("q2 = %+v, want id=q2 type=text", qs[1])
+	}
+	if qs[2].ID != "q3" || qs[2].Type != "multiselect" {
+		t.Errorf("q3 = %+v, want id=q3 type=multiselect", qs[2])
+	}
+	if qs[3].ID != "q4" || qs[3].Type != "boolean" {
+		t.Errorf("q4 = %+v, want id=q4 type=boolean", qs[3])
 	}
 }
 
@@ -31,8 +37,9 @@ func TestParseAskArgsErrorsIncludeExpectedJSON(t *testing.T) {
 		{"empty", `{"questions":[]}`, "must not be empty"},
 		{"missing question", `{"questions":[{"type":"text"}]}`, "question is required"},
 		{"select without options", `{"questions":[{"question":"x","type":"select"}]}`, "no options"},
+		{"multiselect without options", `{"questions":[{"question":"x","type":"multiselect"}]}`, "no options"},
 		{"missing type", `{"questions":[{"question":"x"}]}`, "type must be"},
-		{"unknown type", `{"questions":[{"question":"x","type":"boolean"}]}`, "type must be"},
+		{"unknown type", `{"questions":[{"question":"x","type":"checkbox"}]}`, "type must be"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

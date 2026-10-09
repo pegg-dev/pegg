@@ -1124,6 +1124,38 @@ func (r *runRenderer) onAsk(e agent.AgentAsk) {
 				} else {
 					answers[q.ID] = val
 				}
+			case "multiselect":
+				for i, opt := range q.Options {
+					r.write("  %d) %s\n", i+1, opt)
+				}
+				r.write("  (comma-separated numbers, e.g. 1,3)\n> ")
+				val, ok := r.readLine()
+				if !ok {
+					goto done
+				}
+				labels := parseMultiSelection(val, q.Options)
+				if len(labels) == 0 && q.Required {
+					r.write("%s Select at least one option.\n", r.red("!"))
+					continue
+				}
+				answers[q.ID] = strings.Join(labels, ", ")
+			case "boolean":
+				r.write("  1) Yes\n  2) No\n> ")
+				val, ok := r.readLine()
+				if !ok {
+					goto done
+				}
+				switch strings.ToLower(strings.TrimSpace(val)) {
+				case "1", "y", "yes", "true":
+					answers[q.ID] = "yes"
+				case "2", "n", "no", "false":
+					answers[q.ID] = "no"
+				default:
+					if q.Required {
+						r.write("%s Answer is required.\n", r.red("!"))
+						continue
+					}
+				}
 			}
 			break
 		}
@@ -1134,6 +1166,26 @@ done:
 		AgentID: e.AgentID,
 		Answers: answers,
 	})
+}
+
+func parseMultiSelection(val string, options []string) []string {
+	fields := strings.FieldsFunc(val, func(r rune) bool {
+		return r == ',' || r == ';' || r == ' '
+	})
+	seen := make(map[int]bool)
+	labels := make([]string, 0, len(fields))
+	for _, f := range fields {
+		idx := 0
+		if _, err := fmt.Sscanf(f, "%d", &idx); err != nil {
+			continue
+		}
+		if idx < 1 || idx > len(options) || seen[idx] {
+			continue
+		}
+		seen[idx] = true
+		labels = append(labels, options[idx-1])
+	}
+	return labels
 }
 
 func (r *runRenderer) bold(s string) string { return r.color("\x1b[1m", s) }

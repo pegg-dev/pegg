@@ -53,6 +53,13 @@ func (l *List) SetItems(items []ListItem) {
 
 func (l *List) Items() []ListItem { return l.all }
 
+func (l *List) SetMarked(index int, marked bool) {
+	if index < 0 || index >= len(l.all) {
+		return
+	}
+	l.all[index].Marked = marked
+}
+
 func (l *List) Count() int { return len(l.filtered) }
 
 func (l *List) FilterText() string { return string(l.filter) }

@@ -51,13 +51,13 @@ func AskTool() {
 							},
 							"type": map[string]any{
 								"type":        "string",
-								"enum":        []string{"text", "select"},
-								"description": "'text' for free-form input, 'select' for choosing from options.",
+								"enum":        []string{"text", "select", "multiselect", "boolean"},
+								"description": "'text' free-form input; 'select' pick one option; 'multiselect' pick one or more options; 'boolean' yes/no.",
 							},
 							"options": map[string]any{
 								"type":        "array",
 								"items":       map[string]any{"type": "string"},
-								"description": "Required for 'select' type. List of options to choose from.",
+								"description": "Required for 'select' and 'multiselect'. Ignored for other types.",
 							},
 							"required": map[string]any{
 								"type":        "boolean",
@@ -78,7 +78,7 @@ type askParams struct {
 	Questions []agent.AskQuestion `json:"questions"`
 }
 
-const askExpectedJSON = `{"questions":[{"id":"q1","question":"...","type":"text","required":true},{"id":"q2","question":"...","type":"select","options":["a","b"],"required":false}]}`
+const askExpectedJSON = `{"questions":[{"id":"q1","question":"...","type":"text","required":true},{"id":"q2","question":"...","type":"select","options":["a","b"]},{"id":"q3","question":"...","type":"multiselect","options":["a","b"]},{"id":"q4","question":"...","type":"boolean"}]}`
 
 func askError(reason string) error {
 	return fmt.Errorf("askuserquestion: %s. Expected JSON: %s", reason, askExpectedJSON)
@@ -104,16 +104,16 @@ func validateQuestions(questions []agent.AskQuestion) ([]agent.AskQuestion, erro
 		if strings.TrimSpace(q.Question) == "" {
 			return nil, askError(fmt.Sprintf("questions[%d].question is required", i))
 		}
-		switch strings.ToLower(strings.TrimSpace(q.Type)) {
-		case "text":
-			q.Type = "text"
-		case "select":
-			q.Type = "select"
+		switch typ := strings.ToLower(strings.TrimSpace(q.Type)); typ {
+		case "text", "boolean":
+			q.Type = typ
+		case "select", "multiselect":
 			if len(q.Options) == 0 {
-				return nil, askError(fmt.Sprintf("questions[%d] has type \"select\" but no options", i))
+				return nil, askError(fmt.Sprintf("questions[%d] has type %q but no options", i, typ))
 			}
+			q.Type = typ
 		default:
-			return nil, askError(fmt.Sprintf("questions[%d].type must be \"text\" or \"select\", got %q", i, q.Type))
+			return nil, askError(fmt.Sprintf("questions[%d].type must be one of \"text\", \"select\", \"multiselect\", \"boolean\", got %q", i, q.Type))
 		}
 	}
 	return questions, nil
