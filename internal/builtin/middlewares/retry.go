@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	agentmw "github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	agentmw "github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 var defaultBackoffSchedule = []time.Duration{

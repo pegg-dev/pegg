@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
 )
 
 func TestNewFromConfigOS(t *testing.T) {

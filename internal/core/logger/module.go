@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 type DriverFactory func(cfg config.LoggerConfig) (Handler, error)

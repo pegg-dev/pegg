@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
 )
 
 func SpawnForked(parent *agent.Agent, name, sessionID, prompt string) (string, error) {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent/tool"
+	"github.com/peggco/pegg/internal/agent/tool"
 )
 
 func TestGlobalRegistry(t *testing.T) {

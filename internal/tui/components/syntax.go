@@ -6,7 +6,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/gdamore/tcell/v2"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 var lexerCache sync.Map

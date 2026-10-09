@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	decisionapi "github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	decisionapi "github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type discardHandler struct{}
@@ -186,7 +186,6 @@ func TestRouterDecisionStateHasNoModelList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// models live only in the choice options, not in the state text
 	if strings.Contains(dec.gotReq.State, "prov-a/a-1") || strings.Contains(dec.gotReq.State, "Available models") {
 		t.Fatalf("state must not list models:\n%s", dec.gotReq.State)
 	}
@@ -500,6 +499,9 @@ func TestRouterResolveHookRoutesMarkerAgent(t *testing.T) {
 	if a.Model.ID != "a-1" {
 		t.Fatalf("model = %q, want routed a-1", a.Model.ID)
 	}
+	if !a.RouterManaged {
+		t.Fatal("want RouterManaged set after routing")
+	}
 }
 
 func TestRouterResolveHookRoutesSubagent(t *testing.T) {
@@ -513,12 +515,37 @@ func TestRouterResolveHookRoutesSubagent(t *testing.T) {
 
 	a := agent.New("developer", agent.WithMaxIterations(1))
 	a.ParentAgentID = "parent-1"
+	a.RouterManaged = true
 	a.Model = llm.Model{ID: "inherited"}
 	if _, err := a.Run(context.Background(), "write tests"); err != nil {
 		t.Fatal(err)
 	}
 	if a.Provider == nil || a.Provider.Name() != "prov-a" || a.Model.ID != "a-1" {
 		t.Fatalf("got %v/%q, want routed prov-a/a-1", a.Provider, a.Model.ID)
+	}
+}
+
+func TestRouterResolveHookSkipsUnmanagedSubagent(t *testing.T) {
+	agent.ModelResolveHook.Reset()
+	ModelOptionsHook.Reset()
+	providers := map[string][]llm.Model{"prov-a": {plainModel("a-1")}}
+	mgr, _ := newRouterLLM(t, providers)
+	dec := &mockDecisionProvider{name: "dec", choice: "prov-a/a-1", conf: 0.9}
+	cfg := routerCfg(providers, nil)
+	New(Deps{Config: cfg, LLM: mgr, Decision: newRouterDecision(t, "dec", dec)}, nil)
+
+	a := agent.New("developer", agent.WithMaxIterations(1))
+	a.ParentAgentID = "parent-1"
+	a.Model = llm.Model{ID: "inherited"}
+	a.Provider = &mockLLMProvider{name: "prov-a", models: providers["prov-a"]}
+	if _, err := a.Run(context.Background(), "write tests"); err != nil {
+		t.Fatal(err)
+	}
+	if a.Model.ID != "inherited" {
+		t.Fatalf("model = %q, want unchanged inherited", a.Model.ID)
+	}
+	if len(dec.reqs) != 0 {
+		t.Fatalf("decision provider called %d times, want 0", len(dec.reqs))
 	}
 }
 

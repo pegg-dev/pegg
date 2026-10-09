@@ -10,8 +10,8 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/decision"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/decision"
 )
 
 func TestDecideRequestShape(t *testing.T) {

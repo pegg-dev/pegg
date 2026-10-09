@@ -1,6 +1,6 @@
 # Release notes — additional instructions
 
-Appended to vesvabot's default release-notes prompt. Vesvai formatting rules:
+Appended to peggbot's default release-notes prompt. Pegg formatting rules:
 
 - Sections: `## New Features & Enhancements`, `## Bug Fixes`,
   `## Refactors & Under the Hood`, `## Documentation & Chores`, separated by
@@ -12,4 +12,4 @@ Appended to vesvabot's default release-notes prompt. Vesvai formatting rules:
 - Group version-tag commits under Documentation & Chores → Version Bumps,
   listing the exact versions (e.g. `0.1.2.1` and `0.1.3`).
 - End with a short "Full changelog" compare link:
-  `https://github.com/vesvai/vesvai/compare/{prev}...{new}`.
+  `https://github.com/peggco/pegg/compare/{prev}...{new}`.

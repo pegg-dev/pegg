@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/session"
+	"github.com/peggco/pegg/internal/session"
 )
 
 func TestInitialize(t *testing.T) {
@@ -29,8 +29,8 @@ func TestInitialize(t *testing.T) {
 	if !strings.Contains(resp, `"loadSession":true`) {
 		t.Errorf("expected loadSession capability, got %s", resp)
 	}
-	if !strings.Contains(resp, "vesvai") {
-		t.Errorf("expected vesvai in agentInfo, got %s", resp)
+	if !strings.Contains(resp, "pegg") {
+		t.Errorf("expected pegg in agentInfo, got %s", resp)
 	}
 }
 
@@ -92,7 +92,7 @@ func TestSessionNewEmptyCwd(t *testing.T) {
 	}
 }
 
-func TestSessionNewCreatesVesvaiSession(t *testing.T) {
+func TestSessionNewCreatesPeggSession(t *testing.T) {
 	srv := newTestServer(t)
 	ctx := context.Background()
 
@@ -107,11 +107,11 @@ func TestSessionNewCreatesVesvaiSession(t *testing.T) {
 	if !ok {
 		t.Fatal("expected active session")
 	}
-	if acpSess.VesvaiSessionID == "" {
-		t.Error("expected a Vesvai session to be persisted")
+	if acpSess.PeggSessionID == "" {
+		t.Error("expected a Pegg session to be persisted")
 	}
-	if _, err := srv.sessions.Get(acpSess.VesvaiSessionID); err != nil {
-		t.Errorf("expected vesvai session to exist, got %v", err)
+	if _, err := srv.sessions.Get(acpSess.PeggSessionID); err != nil {
+		t.Errorf("expected pegg session to exist, got %v", err)
 	}
 }
 

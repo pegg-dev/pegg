@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 func TestFreshInstallGoplsAutoInstall(t *testing.T) {
-	if os.Getenv("VESVAI_LSP_INSTALL_E2E") != "1" {
-		t.Skip("set VESVAI_LSP_INSTALL_E2E=1 to run (network + compile)")
+	if os.Getenv("PEGG_LSP_INSTALL_E2E") != "1" {
+		t.Skip("set PEGG_LSP_INSTALL_E2E=1 to run (network + compile)")
 	}
 
 	Register("gopls", config.LanguageServerConfig{
@@ -22,7 +22,7 @@ func TestFreshInstallGoplsAutoInstall(t *testing.T) {
 		Install:     "go install golang.org/x/tools/gopls@latest",
 	})
 	home := t.TempDir()
-	gopath := filepath.Join(os.TempDir(), "vesvai-fresh-gopath")
+	gopath := filepath.Join(os.TempDir(), "pegg-fresh-gopath")
 	_ = os.RemoveAll(gopath)
 	t.Cleanup(func() { _ = os.RemoveAll(gopath) })
 	if err := os.MkdirAll(gopath, 0755); err != nil {
@@ -38,7 +38,7 @@ func TestFreshInstallGoplsAutoInstall(t *testing.T) {
 	if err != nil {
 		t.Skipf("auto-install failed (may be offline): %v", err)
 	}
-	want := filepath.Join(home, ".vesvai", "lsps", "gopls")
+	want := filepath.Join(home, ".pegg", "lsps", "gopls")
 	if bin != want {
 		t.Fatalf("binary = %q, want cache at %q", bin, want)
 	}

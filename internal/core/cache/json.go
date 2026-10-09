@@ -2,12 +2,13 @@ package cache
 
 import (
 	"fmt"
-	json "github.com/goccy/go-json"
 	"os"
 	"path/filepath"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 const DriverJSON = "json"

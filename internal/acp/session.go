@@ -8,11 +8,11 @@ import (
 	json "github.com/goccy/go-json"
 	"github.com/google/uuid"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 type SessionNewParams struct {
@@ -118,9 +118,9 @@ func (s *Server) handleSessionNew(ctx context.Context, params json.RawMessage) (
 		ProjectDir: req.Cwd,
 	})
 	if err != nil {
-		s.log.Fdebug("acp: create vesvai session: %v", err)
+		s.log.Fdebug("acp: create pegg session: %v", err)
 	} else {
-		acpSess.VesvaiSessionID = vs.ID
+		acpSess.PeggSessionID = vs.ID
 		s.bus.Publish(session.TopicSessionResume, session.SessionResume{
 			AgentID:   orch.ID,
 			SessionID: vs.ID,
@@ -166,11 +166,11 @@ func (s *Server) handleSessionLoad(ctx context.Context, params json.RawMessage) 
 	}
 
 	acpSess := &ACPSession{
-		ID:              string(req.SessionId),
-		Agent:           orch,
-		CreatedAt:       time.Now(),
-		Cwd:             req.Cwd,
-		VesvaiSessionID: vs.ID,
+		ID:            string(req.SessionId),
+		Agent:         orch,
+		CreatedAt:     time.Now(),
+		Cwd:           req.Cwd,
+		PeggSessionID: vs.ID,
 	}
 	s.addSession(acpSess)
 
@@ -199,11 +199,11 @@ func (s *Server) handleSessionResume(ctx context.Context, params json.RawMessage
 	}
 
 	acpSess := &ACPSession{
-		ID:              string(req.SessionId),
-		Agent:           orch,
-		CreatedAt:       time.Now(),
-		Cwd:             req.Cwd,
-		VesvaiSessionID: vs.ID,
+		ID:            string(req.SessionId),
+		Agent:         orch,
+		CreatedAt:     time.Now(),
+		Cwd:           req.Cwd,
+		PeggSessionID: vs.ID,
 	}
 	s.addSession(acpSess)
 

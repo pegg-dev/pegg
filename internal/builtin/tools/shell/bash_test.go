@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func setupTestFS(t *testing.T) *vfs.VFS {

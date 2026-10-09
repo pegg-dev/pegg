@@ -1,10 +1,10 @@
 package web
 
-import "github.com/vesvai/vesvai/internal/agent/prompt"
+import "github.com/peggco/pegg/internal/agent/prompt"
 
 func websearchToolPromptBuilder() *prompt.Prompt {
 	return prompt.New().
-		List("Allows vesvai to search the web and use the results to inform responses",
+		List("Allows pegg to search the web and use the results to inform responses",
 			"Provides up-to-date information for current events and recent data",
 			"Returns search result information formatted as search result blocks",
 			"Use this tool for accessing information beyond your knowledge cutoff",

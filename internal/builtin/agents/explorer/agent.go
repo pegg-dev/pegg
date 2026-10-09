@@ -1,9 +1,9 @@
 package explorer
 
 import (
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	_ "github.com/vesvai/vesvai/internal/builtin/middlewares"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	_ "github.com/peggco/pegg/internal/builtin/middlewares"
 )
 
 func Register() {

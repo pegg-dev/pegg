@@ -1,8 +1,8 @@
 package tools
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 var reg = tool.NewRegistry()

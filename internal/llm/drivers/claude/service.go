@@ -3,13 +3,14 @@ package claude
 import (
 	"context"
 	"fmt"
-	json "github.com/goccy/go-json"
 	"strings"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/http"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/http"
 )
 
 type Service struct {
@@ -23,6 +24,14 @@ type ServiceConfig struct {
 	APIKey  string
 	Headers map[string]string
 	Timeout time.Duration
+
+	AuthHeader string
+	AuthToken  func(ctx context.Context) (string, error)
+	Refresh    func(ctx context.Context) error
+
+	SystemPrefix string
+
+	Models []llm.Model
 }
 
 func NewService(name string, cfg ServiceConfig) *Service {
@@ -32,7 +41,17 @@ func NewService(name string, cfg ServiceConfig) *Service {
 	}
 
 	opts := []http.Option{http.WithTimeout(timeout)}
-	if cfg.APIKey != "" {
+	switch {
+	case cfg.AuthToken != nil:
+		header := cfg.AuthHeader
+		if header == "" {
+			header = "Authorization"
+		}
+		opts = append(opts, http.WithAuthHeader(header, cfg.AuthToken))
+		if cfg.Refresh != nil {
+			opts = append(opts, http.WithRefresh(cfg.Refresh))
+		}
+	case cfg.APIKey != "":
 		opts = append(opts, http.WithHeader("x-api-key", cfg.APIKey))
 	}
 	opts = append(opts, http.WithHeader("anthropic-version", "2023-06-01"))
@@ -50,6 +69,8 @@ func NewService(name string, cfg ServiceConfig) *Service {
 }
 
 func (s *Service) Name() string { return s.name }
+
+func (s *Service) SkipModelCache() bool { return len(s.cfg.Models) > 0 }
 
 func (s *Service) Chat(ctx context.Context, req *llm.Request) (*llm.Response, error) {
 	body := s.buildBody(req, false)
@@ -86,6 +107,9 @@ func (s *Service) ChatStream(ctx context.Context, req *llm.Request, handler llm.
 }
 
 func (s *Service) ListModels(ctx context.Context) ([]llm.Model, error) {
+	if len(s.cfg.Models) > 0 {
+		return s.cfg.Models, nil
+	}
 	var resp claudeModelsResponse
 	if err := s.httpClient.Do(ctx, "GET", "/v1/models", nil, &resp); err != nil {
 		return nil, mapError(err)
@@ -116,6 +140,10 @@ func (s *Service) buildBody(req *llm.Request, stream bool) any {
 
 	var systemParts []string
 	var messages []claudeMessage
+
+	if s.cfg.SystemPrefix != "" {
+		systemParts = append(systemParts, s.cfg.SystemPrefix)
+	}
 
 	for _, msg := range req.Messages {
 		switch msg.Role {

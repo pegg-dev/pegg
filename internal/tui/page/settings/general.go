@@ -6,13 +6,14 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/router"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/llm/subscription"
+	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type generalTab struct {
@@ -53,6 +54,19 @@ func (g *generalTab) HandleKey(ev *tcell.EventKey) bool {
 		return true
 	}
 	return false
+}
+
+func (g *generalTab) HandleMouse(x, y int, bounds layout.Region, buttons tcell.ButtonMask) bool {
+	rows := g.rows()
+	idx := y - bounds.Top
+	if idx < 0 || idx >= len(rows) {
+		return false
+	}
+	g.index = idx
+	if buttons&tcell.ButtonPrimary != 0 && g.rowEnabled(idx) {
+		rows[idx].action()
+	}
+	return true
 }
 
 type genRow struct {
@@ -137,6 +151,10 @@ func (s *Settings) openProviders() {
 	l.SetItems(items)
 	l.SetOnSelect(func(_ int, item components.ListItem) {
 		name, _ := item.Data.(string)
+		if info, ok := subscription.Get(name); ok {
+			s.openSubscription(name, info)
+			return
+		}
 		if _, ok := s.configured(name); ok {
 			s.openProviderChoice(name)
 		} else {
@@ -144,6 +162,42 @@ func (s *Settings) openProviders() {
 		}
 	})
 	s.openSub(&listModal{title: "Providers (type to search)", list: l, onBack: s.back})
+}
+
+func (s *Settings) openSubscription(name string, info subscription.Info) {
+	if !info.Status().LoggedIn {
+		l := components.NewList("Sign in required")
+		l.SetItems([]components.ListItem{
+			{Label: info.Hint, Disabled: true},
+			{Label: "Retry", Detail: "re-check credentials"},
+			{Label: "Cancel", Detail: "go back"},
+		})
+		l.SelectFirstEnabled()
+		l.SetOnSelect(func(i int, _ components.ListItem) {
+			if i == 1 {
+				s.openSubscription(name, info)
+			} else {
+				s.back()
+			}
+		})
+		s.openSub(&listModal{title: name + " — not signed in", list: l, onBack: s.back})
+		return
+	}
+
+	cfg := config.LLMConfig{Provider: name}
+	if err := config.UpsertProvider(cfg); err != nil {
+		s.errMsg = "failed to save provider: " + err.Error()
+		s.back()
+		return
+	}
+	if fresh, err := config.Load(); err == nil {
+		s.deps.Config = fresh
+	}
+	if s.deps.Bus != nil {
+		s.deps.Bus.Publish(event.TopicProviderAdded, cfg)
+	}
+	s.errMsg = ""
+	s.back()
 }
 
 func (s *Settings) openProviderChoice(name string) {

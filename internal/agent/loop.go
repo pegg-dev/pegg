@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vesvai/vesvai/internal/agent/reminder"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent/reminder"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type runState struct {
@@ -72,6 +72,7 @@ func (a *Agent) run(ctx context.Context, input string, stream StreamHandler) (*R
 	if a.SystemPrompt != "" {
 		state.history = append(state.history, llm.SystemMessage(a.SystemPrompt))
 	}
+	state.history = appendSystemReminders(state.history, mi.SystemReminders)
 	if strings.TrimSpace(input) != "" {
 		state.history = append(state.history, a.userMessage(input))
 	}
@@ -132,6 +133,7 @@ func (a *Agent) resume(ctx context.Context, input string, history []llm.Message,
 	state.provider = prov.Name()
 
 	state.history = append(state.history, history...)
+	state.history = appendSystemReminders(state.history, mi.SystemReminders)
 	if strings.TrimSpace(input) != "" {
 		state.history = append(state.history, a.userMessage(input))
 	}
@@ -142,6 +144,17 @@ func (a *Agent) resume(ctx context.Context, input string, history []llm.Message,
 	}
 
 	return a.loop(ctx, state, prov)
+}
+
+func appendSystemReminders(history []llm.Message, reminders []string) []llm.Message {
+	for _, r := range reminders {
+		r = strings.TrimSpace(r)
+		if r == "" {
+			continue
+		}
+		history = append(history, llm.SystemMessage("<system-reminder>\n"+r+"\n</system-reminder>"))
+	}
+	return history
 }
 
 func (a *Agent) loop(ctx context.Context, state *runState, prov llm.Provider) (*RunResult, error) {

@@ -1,6 +1,6 @@
 # Respond — additional instructions
 
-Appended to vesvabot's default respond prompt. Repository rules for vesvai:
+Appended to peggbot's default respond prompt. Repository rules for pegg:
 
 - When asked "is this really an issue?", reproduce the behavior against the
   code first. Point to the exact file:line and quote the behavior.

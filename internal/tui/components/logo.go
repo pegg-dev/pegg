@@ -3,24 +3,26 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 var logoArt1 = []string{
-	"__        __                   _",
-	"\\ \\      / /__  _____   ____ _(_)",
-	" \\ \\    / / _ \\/ __\\ \\ / / _` | |",
-	"  \\ \\  / /  __/\\__ \\\\ V / (_| | |",
-	"   \\_\\/_/ \\___||___/ \\_/ \\__,_|_|",
+	" _ __   ___  __ _  __ _ ",
+	"| '_ \\ / _ \\/ _` |/ _` |",
+	"| |_) |  __/ (_| | (_| |",
+	"| .__/ \\___|\\__, |\\__, |",
+	"| |          __/ | __/ |",
+	"|_|         |___/ |___/ ",
 }
 
 var logoArt2 = []string{
-	"__                             _",
-	"\\ \\         __  _____   ____ _(_)",
-	" \\ \\      / _ \\/ __\\ \\ / / _` | |",
-	"  \\ \\       __/\\__ \\\\ V / (_| | |",
-	"   \\_\\    \\___||___/ \\_/ \\__,_|_|",
+	" _ __   ___  __ _  __ _ ",
+	"| '_ \\ / _ \\/ _` |/ _` |",
+	"| |_) |  __/ (_| | (_| |",
+	"| .__/ \\___|\\__, |\\__, |",
+	"| |          __/ X \\__ |",
+	"|_|         |___/ \\___/ ",
 }
 
 type Logo struct {

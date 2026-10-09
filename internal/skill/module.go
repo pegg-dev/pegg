@@ -5,20 +5,20 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/builtin/skills"
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/builtin/skills"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 const agentsSkillsDir = ".agents/skills"
 
 func SkillModule() error {
-	vesvaiSkills, err := config.GetConfigPath("skills")
+	peggSkills, err := config.GetConfigPath("skills")
 	if err != nil {
 		return err
 	}
-	if err := MaterializeTo(vesvaiSkills); err != nil {
+	if err := MaterializeTo(peggSkills); err != nil {
 		return err
 	}
 	home, err := os.UserHomeDir()
@@ -31,7 +31,7 @@ func SkillModule() error {
 	}
 	if err := LoadDirs(
 		filepath.Join(home, agentsSkillsDir),
-		vesvaiSkills,
+		peggSkills,
 		projSkills,
 	); err != nil {
 		return err

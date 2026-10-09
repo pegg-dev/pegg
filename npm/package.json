@@ -1,0 +1,49 @@
+{
+  "name": "@peggco/pegg",
+  "version": "0.1.5",
+  "description": "pegg — hands-free AI coding agent. Installs the native pegg binary for your platform.",
+  "bin": {
+    "pegg": "bin/pegg.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "bin/pegg.js",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peggco/pegg.git",
+    "directory": "npm"
+  },
+  "homepage": "https://pegg.dev",
+  "bugs": {
+    "url": "https://github.com/peggco/pegg/issues"
+  },
+  "license": "FSL-1.1-MIT",
+  "keywords": [
+    "pegg",
+    "ai",
+    "coding-agent",
+    "cli",
+    "agent",
+    "llm"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

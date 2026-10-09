@@ -8,13 +8,13 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type ACPSession struct {
@@ -23,7 +23,7 @@ type ACPSession struct {
 	CreatedAt time.Time
 	Cwd       string
 
-	VesvaiSessionID string
+	PeggSessionID string
 
 	cancel context.CancelFunc
 	mu     sync.Mutex

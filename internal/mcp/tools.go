@@ -2,11 +2,12 @@ package mcp
 
 import (
 	"context"
-	json "github.com/goccy/go-json"
 	"sort"
 	"strings"
 
-	"github.com/vesvai/vesvai/internal/agent/tools"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/agent/tools"
 )
 
 const ToolNameSeparator = "__"

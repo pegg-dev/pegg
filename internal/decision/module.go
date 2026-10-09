@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 type ProviderFactory func(cfg config.LLMConfig) (Provider, error)

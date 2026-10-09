@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type Chain struct {

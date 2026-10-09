@@ -3,17 +3,17 @@ package sdk
 import (
 	"context"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/compaction"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/skill"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/builtin/middlewares/compaction"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/skill"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type (

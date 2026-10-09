@@ -2,15 +2,16 @@ package cli
 
 import (
 	"fmt"
-	json "github.com/goccy/go-json"
 	"io"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/router"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/router"
 )
 
 func (c *CLI) newModelsCommand() *cobra.Command {

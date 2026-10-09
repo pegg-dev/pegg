@@ -4,7 +4,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/hook"
+	"github.com/peggco/pegg/internal/core/hook"
 )
 
 var (

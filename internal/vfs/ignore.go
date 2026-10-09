@@ -6,18 +6,18 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 const ignoreFileGit = ".gitignore"
 
-const ignoreFileVesva = ".vesvaignore"
+const ignoreFilePegg = ".peggignore"
 
 const (
-	vesvaiDir = ".vesvai"
-	PlansDir  = vesvaiDir + "/plans"
-	RulesDir  = vesvaiDir + "/rules"
-	SkillsDir = vesvaiDir + "/skills"
+	peggDir   = ".pegg"
+	PlansDir  = peggDir + "/plans"
+	RulesDir  = peggDir + "/rules"
+	SkillsDir = peggDir + "/skills"
 )
 
 func isGlobalWritable(abs string) bool {
@@ -37,8 +37,8 @@ func isGlobalWritable(abs string) bool {
 	return clean == skills || strings.HasPrefix(clean, skills+string(filepath.Separator))
 }
 
-func isVesvaiPath(rel string) bool {
-	return rel == vesvaiDir || strings.HasPrefix(rel, vesvaiDir+"/")
+func isPeggPath(rel string) bool {
+	return rel == peggDir || strings.HasPrefix(rel, peggDir+"/")
 }
 
 func isPlansPath(rel string) bool {
@@ -81,7 +81,7 @@ func (ig *Ignorer) Ignored(rel string, isDir bool) bool {
 	if rel == ".git" || strings.HasPrefix(rel, ".git/") {
 		return true
 	}
-	if isVesvaiPath(rel) {
+	if isPeggPath(rel) {
 		return false
 	}
 
@@ -145,7 +145,7 @@ func (ig *Ignorer) load(dir string) []pattern {
 		phys = filepath.Join(phys, filepath.FromSlash(dir))
 	}
 	var pats []pattern
-	for _, name := range []string{ignoreFileGit, ignoreFileVesva} {
+	for _, name := range []string{ignoreFileGit, ignoreFilePegg} {
 		data, err := os.ReadFile(filepath.Join(phys, name))
 		if err != nil {
 			continue

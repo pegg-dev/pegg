@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/vesvai/vesvai/internal/builtin/lsps"
-	"github.com/vesvai/vesvai/internal/lsp"
+	_ "github.com/peggco/pegg/internal/builtin/lsps"
+	"github.com/peggco/pegg/internal/lsp"
 )
 
 func TestDefaultServersHaveFileTypes(t *testing.T) {
@@ -66,7 +66,7 @@ func TestDefaultServerInstallsAreShellSafe(t *testing.T) {
 		if len(cfg.Install) > 2000 {
 			t.Errorf("server %q install command unreasonably long", name)
 		}
-		if strings.Contains(cfg.Install, "~/.vesvai/lsps/") && !strings.Contains(cfg.Install, `"$HOME/.vesvai/lsps/`) && !strings.Contains(cfg.Install, `"$HOME/.vesvai/lsps")`) {
+		if strings.Contains(cfg.Install, "~/.pegg/lsps/") && !strings.Contains(cfg.Install, `"$HOME/.pegg/lsps/`) && !strings.Contains(cfg.Install, `"$HOME/.pegg/lsps")`) {
 			t.Errorf("server %q install writes to cache without quoting $HOME", name)
 		}
 	}

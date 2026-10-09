@@ -51,7 +51,7 @@ func (c *Client) Initialize(ctx context.Context) (InitializeResult, error) {
 		var result InitializeResult
 		params := map[string]any{
 			"processId":    -1,
-			"clientInfo":   map[string]any{"name": "vesvai", "version": "0.1.0"},
+			"clientInfo":   map[string]any{"name": "pegg", "version": "0.1.0"},
 			"capabilities": map[string]any{},
 		}
 		err := c.call(ctx, MethodInitialize, params, &result)

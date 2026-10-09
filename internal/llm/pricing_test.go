@@ -3,13 +3,14 @@ package llm
 import (
 	"context"
 	"errors"
-	json "github.com/goccy/go-json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 func TestLookupModelConfig(t *testing.T) {

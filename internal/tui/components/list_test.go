@@ -1,9 +1,13 @@
 package components
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
+
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 func items(n int) []ListItem {
@@ -127,4 +131,87 @@ func TestListHomeEndEmpty(t *testing.T) {
 	l.End()
 	l.MoveUp()
 	l.MoveDown()
+}
+
+func TestListMouseClickAndHover(t *testing.T) {
+	styles.RegisterDefaults()
+	styles.Set("dark")
+	s := tcell.NewSimulationScreen("UTF-8")
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	defer s.Fini()
+	s.SetSize(40, 12)
+
+	l := NewList("test")
+	l.SetItems(items(5))
+	sel := -1
+	l.SetOnSelect(func(i int, _ ListItem) { sel = i })
+	bounds := layout.Region{Left: 0, Top: 0, Width: 40, Height: 10}
+	l.Draw(s, bounds, true)
+
+	if !l.HandleMouse(bounds.Left+1, bounds.Top+2, 0) {
+		t.Fatal("hover should be handled")
+	}
+	if l.index != 2 {
+		t.Fatalf("index = %d, want 2 after hover", l.index)
+	}
+
+	if !l.HandleMouse(bounds.Left+1, bounds.Top+3, tcell.ButtonPrimary) {
+		t.Fatal("click should be handled")
+	}
+	if sel != 3 {
+		t.Fatalf("selected = %d, want 3", sel)
+	}
+}
+
+func TestListSelectFirstEnabledSkipsDisabled(t *testing.T) {
+	l := NewList("t")
+	l.SetItems([]ListItem{
+		{Label: "hint", Disabled: true},
+		{Label: "a"},
+		{Label: "b"},
+	})
+	l.SelectFirstEnabled()
+	if it, _ := l.Selected(); it.Label != "a" {
+		t.Fatalf("selected = %q, want a", it.Label)
+	}
+	l.MoveUp()
+	if it, _ := l.Selected(); it.Label != "a" {
+		t.Fatalf("MoveUp should stay on first enabled, got %q", it.Label)
+	}
+	l.MoveDown()
+	if it, _ := l.Selected(); it.Label != "b" {
+		t.Fatalf("MoveDown selected = %q, want b", it.Label)
+	}
+}
+
+func TestListLongHintRendersFully(t *testing.T) {
+	styles.RegisterDefaults()
+	styles.Set("dark")
+	s := tcell.NewSimulationScreen("UTF-8")
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	defer s.Fini()
+	s.SetSize(60, 10)
+
+	l := NewList("t")
+	l.SetItems([]ListItem{
+		{Label: "run `claude` to sign in, then retry", Disabled: true},
+		{Label: "Retry", Detail: "re-check credentials"},
+		{Label: "Cancel", Detail: "go back"},
+	})
+	l.SelectFirstEnabled()
+	bounds := layout.Region{Left: 0, Top: 0, Width: 60, Height: 8}
+	l.Draw(s, bounds, true)
+
+	var row []rune
+	for x := 0; x < 60; x++ {
+		ch, _, _, _ := s.GetContent(x, 0)
+		row = append(row, ch)
+	}
+	if got := strings.TrimRight(string(row), " "); !strings.Contains(got, "run `claude` to sign in, then retry") {
+		t.Fatalf("hint row = %q, want the full hint", got)
+	}
 }

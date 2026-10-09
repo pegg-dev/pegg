@@ -2,14 +2,15 @@ package planner
 
 import (
 	"context"
-	json "github.com/goccy/go-json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/vfs"
+	json "github.com/goccy/go-json"
+
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func newTestFS(t *testing.T) *vfs.VFS {
@@ -121,7 +122,7 @@ func TestPlannerWritesOnlyToPlans(t *testing.T) {
 		reg[name] = tk
 	}
 
-	scope := ".vesvai/plans"
+	scope := ".pegg/plans"
 	if _, err := reg["write"].Execute(context.Background(), `{"filePath": "`+scope+`/spec-1.md", "content": "step 1"}`); err != nil {
 		t.Fatalf("write into plans: %v", err)
 	}
@@ -154,7 +155,7 @@ func TestPlannerWritesOnlyToPlans(t *testing.T) {
 
 func TestPlannerReadsPlansDespiteGitignore(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".vesvai/\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(".pegg/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	fs, err := vfs.New(root, vfs.Options{})
@@ -172,7 +173,7 @@ func TestPlannerReadsPlansDespiteGitignore(t *testing.T) {
 	read, _ := a.Tools.Get("read")
 	write, _ := a.Tools.Get("write")
 
-	scope := ".vesvai/plans"
+	scope := ".pegg/plans"
 	if _, err := write.Execute(context.Background(), `{"filePath": "`+scope+`/spec-1.md", "content": "plan body"}`); err != nil {
 		t.Fatalf("write into gitignored plans dir: %v", err)
 	}

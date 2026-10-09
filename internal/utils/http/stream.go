@@ -13,6 +13,7 @@ type LineDecoder struct {
 	buffer    []byte
 	readBuf   []byte
 	searchPos int
+	err       error
 }
 
 func NewLineDecoder(r io.Reader) *LineDecoder {
@@ -34,6 +35,16 @@ func (ld *LineDecoder) Decode() ([]byte, error) {
 		}
 		ld.searchPos = len(ld.buffer)
 
+		if ld.err != nil {
+			if len(ld.buffer) > 0 {
+				line := ld.buffer
+				ld.buffer = nil
+				ld.searchPos = 0
+				return bytes.TrimSpace(line), nil
+			}
+			return nil, ld.err
+		}
+
 		n, err := ld.reader.Read(ld.readBuf)
 		if n > 0 {
 			ld.buffer = append(ld.buffer, ld.readBuf[:n]...)
@@ -41,16 +52,7 @@ func (ld *LineDecoder) Decode() ([]byte, error) {
 				return nil, errors.New("stream: line exceeds maximum size")
 			}
 		}
-
-		if err != nil {
-			if len(ld.buffer) > 0 {
-				line := ld.buffer
-				ld.buffer = nil
-				ld.searchPos = 0
-				return bytes.TrimSpace(line), nil
-			}
-			return nil, err
-		}
+		ld.err = err
 	}
 }
 

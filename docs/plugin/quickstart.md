@@ -4,21 +4,21 @@ icon: lucide/zap
 
 # Quickstart
 
-Build a working Vesvai plugin in under 5 minutes.
+Build a working Pegg plugin in under 5 minutes.
 
 ## Prerequisites
 
 - Go 1.26 or later
-- Vesvai installed and working
+- Pegg installed and working
 
 ## Step 1: Create the project
 
 ```bash
-mkdir my-vesvai-plugin
-cd my-vesvai-plugin
-go mod init my-vesvai-plugin
+mkdir my-pegg-plugin
+cd my-pegg-plugin
+go mod init my-pegg-plugin
 go get github.com/hashicorp/go-plugin@latest
-go get github.com/vesvai/vesvai@latest
+go get github.com/peggco/pegg@latest
 go get github.com/hashicorp/go-hclog@latest
 ```
 
@@ -35,7 +35,7 @@ import (
 
     "github.com/hashicorp/go-hclog"
     "github.com/hashicorp/go-plugin"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 // MyPlugin implements the shared.Plugin interface
@@ -50,7 +50,7 @@ func (p *MyPlugin) Version() string {
 }
 
 func (p *MyPlugin) Description() string {
-    return "My first Vesvai plugin"
+    return "My first Pegg plugin"
 }
 
 func (p *MyPlugin) Boot(deps shared.Deps) error {
@@ -69,7 +69,7 @@ func main() {
     plugin.Serve(&plugin.ServeConfig{
         HandshakeConfig: shared.Handshake,
         Plugins: map[string]plugin.Plugin{
-            "vesvai": &shared.VesvaiPluginRPC{
+            "pegg": &shared.PeggPluginRPC{
                 Impl: &MyPlugin{},
             },
         },
@@ -85,15 +85,15 @@ func main() {
 go build -o my-plugin .
 
 # Install
-mkdir -p ~/.vesvai/plugins
-cp my-plugin ~/.vesvai/plugins/
-chmod +x ~/.vesvai/plugins/my-plugin
+mkdir -p ~/.pegg/plugins
+cp my-plugin ~/.pegg/plugins/
+chmod +x ~/.pegg/plugins/my-plugin
 ```
 
 ## Step 4: Verify
 
 ```bash
-vesvai plugin list
+pegg plugin list
 ```
 
 Output:
@@ -101,7 +101,7 @@ Output:
 ```
 NAME        VERSION  DESCRIPTION
 ----        -------  -----------
-my-plugin   1.0.0    My first Vesvai plugin
+my-plugin   1.0.0    My first Pegg plugin
 
 Total: 1 plugins
 ```
@@ -109,7 +109,7 @@ Total: 1 plugins
 ## Step 5: Check details
 
 ```bash
-vesvai plugin info my-plugin
+pegg plugin info my-plugin
 ```
 
 Output:
@@ -117,12 +117,12 @@ Output:
 ```
 Name:        my-plugin
 Version:     1.0.0
-Description: My first Vesvai plugin
-Path:        /home/user/.vesvai/plugins/my-plugin
+Description: My first Pegg plugin
+Path:        /home/user/.pegg/plugins/my-plugin
 ```
 
 ## Next steps
 
 - Read the [Interface Reference](interface.md) for all available types and methods
 - See the [Development Guide](development.md) for more advanced patterns
-- Check the [Configuration](../vesvai/configurations/plugins.md) for options
+- Check the [Configuration](../pegg/configurations/plugins.md) for options

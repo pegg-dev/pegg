@@ -13,21 +13,22 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2/terminfo"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/update"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/router"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/skill"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/page/home"
-	"github.com/vesvai/vesvai/internal/tui/page/settings"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/update"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/skill"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/page/home"
+	"github.com/peggco/pegg/internal/tui/page/settings"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 const (
@@ -77,6 +78,9 @@ type App struct {
 
 	escHint  bool
 	errorMsg string
+
+	mouseX int
+	mouseY int
 
 	pasteActive bool
 	pasteBuffer strings.Builder
@@ -145,7 +149,7 @@ func (a *App) requestRedraw() {
 func Run(bus event.Bus, deps settings.Deps) error {
 	setBus(bus)
 
-	s, err := tcell.NewScreen()
+	s, err := newScreen()
 	if err != nil {
 		return fmt.Errorf("tui: create screen: %w", err)
 	}
@@ -166,6 +170,27 @@ func Run(bus event.Bus, deps settings.Deps) error {
 		cancel:      cancel,
 	}
 	return a.start()
+}
+
+func newScreen() (tcell.Screen, error) {
+	if ti, err := tcell.LookupTerminfo(os.Getenv("TERM")); err == nil {
+		if prep := prepareTerminfo(ti); prep != nil {
+			if s, err := tcell.NewTerminfoScreenFromTtyTerminfo(newKeypadTty(os.Getenv("PEGG_KEYLOG")), prep); err == nil {
+				return s, nil
+			}
+		}
+	}
+	return tcell.NewScreen()
+}
+
+func prepareTerminfo(ti *terminfo.Terminfo) *terminfo.Terminfo {
+	if ti == nil {
+		return nil
+	}
+	clone := *ti
+	clone.EnterKeypad = ""
+	clone.ExitKeypad = ""
+	return &clone
 }
 
 func (a *App) start() error {
@@ -387,25 +412,30 @@ func (a *App) loop() error {
 			}
 		case *tcell.EventMouse:
 			x, y := e.Position()
-			switch e.Buttons() {
-			case tcell.WheelUp:
-				if a.getOverlay() == nil && a.home != nil {
-					if a.home.HandleScroll(-3) {
-						a.draw()
-					}
+			a.mouseX, a.mouseY = x, y
+			btns := e.Buttons()
+			if ov := a.getOverlay(); ov != nil {
+				if m, ok := ov.(components.MouseComponent); ok && m.HandleMouse(x, y, btns) {
+					a.draw()
 				}
-			case tcell.WheelDown:
-				if a.getOverlay() == nil && a.home != nil {
-					if a.home.HandleScroll(3) {
-						a.draw()
-					}
+				break
+			}
+			if a.home == nil {
+				break
+			}
+			switch {
+			case btns&tcell.WheelUp != 0:
+				if a.home.HandleScroll(-3) {
+					a.draw()
 				}
-			case tcell.ButtonPrimary:
-				if a.getOverlay() == nil && a.home != nil {
-					w, h := a.screen.Size()
-					if a.home.HandleClick(x, y, w, h) {
-						a.draw()
-					}
+			case btns&tcell.WheelDown != 0:
+				if a.home.HandleScroll(3) {
+					a.draw()
+				}
+			default:
+				w, h := a.screen.Size()
+				if a.home.HandleMouse(x, y, w, h, btns) {
+					a.draw()
 				}
 			}
 		case *tcell.EventFocus:
@@ -465,6 +495,11 @@ func (a *App) handleKey(ev *tcell.EventKey) bool {
 		return true
 	}
 
+	if resolveGlobal(kev) == ActionCopy {
+		a.copySelection()
+		return true
+	}
+
 	if a.root != nil && a.root.HandleKey(kev) {
 		return true
 	}
@@ -484,6 +519,22 @@ func (a *App) handleKey(ev *tcell.EventKey) bool {
 		return true
 	}
 	return false
+}
+
+func (a *App) copySelection() {
+	a.chatMu.Lock()
+	var text string
+	if a.home != nil && a.home.Input().HasSelection() {
+		text = a.home.Input().SelectedText()
+	}
+	if text == "" && a.chat != nil && a.chat.HasSelection() {
+		text = a.chat.SelectedText()
+	}
+	a.chatMu.Unlock()
+	if text == "" {
+		return
+	}
+	a.screen.SetClipboard([]byte(text))
 }
 
 func (a *App) openSettings() {
@@ -511,25 +562,7 @@ func (a *App) openSettings() {
 		s.SetActiveSession(&info)
 	}
 	s.SetOnSessionChange(func(info settings.SessionInfo) {
-		a.chatMu.Lock()
-		changed := a.session == nil || a.session.info.ID != info.ID
-		a.session = &activeSession{info: info, viewID: info.ID}
-		if changed && a.agent != nil {
-			a.agent.DetachReminder()
-		}
-		a.reasoningEffort = info.ReasoningEffort
-		if a.deps.LLM != nil && info.Provider != "" && info.Model != "" {
-			if res := a.deps.LLM.Select(llm.SelectRequest{
-				Mode:     llm.SelectModeExact,
-				Provider: info.Provider,
-				Model:    info.Model,
-			}); res.Err == nil {
-				a.model = selectedModel{provider: res.Provider, model: res.Model}
-			}
-		}
-		a.loadSessionIntoChatLocked()
-		a.refreshHomeLocked()
-		a.chatMu.Unlock()
+		a.activateSession(info)
 	})
 	s.SetOnSessionClear(func() {
 		a.chatMu.Lock()
@@ -636,6 +669,29 @@ func (a *App) refreshMentionItemsLocked() {
 	}
 	items = append(items, files...)
 	a.home.SetMentionItems(items)
+}
+
+func (a *App) activateSession(info settings.SessionInfo) {
+	a.chatMu.Lock()
+	changed := a.session == nil || a.session.info.ID != info.ID
+	a.session = &activeSession{info: info, viewID: info.ID}
+	if changed && a.agent != nil {
+		a.agent.DetachReminder()
+	}
+	a.reasoningEffort = info.ReasoningEffort
+	if a.deps.LLM != nil && info.Provider != "" && info.Model != "" {
+		if res := a.deps.LLM.Select(llm.SelectRequest{
+			Mode:     llm.SelectModeExact,
+			Provider: info.Provider,
+			Model:    info.Model,
+		}); res.Err == nil {
+			a.model = selectedModel{provider: res.Provider, model: res.Model}
+		}
+	}
+	a.loadSessionIntoChatLocked()
+	a.refreshHomeLocked()
+	a.chatMu.Unlock()
+	a.requestRedraw()
 }
 
 func (a *App) loadSessionIntoChatLocked() {
@@ -754,9 +810,11 @@ func (a *App) drawLocked() {
 	style := th.Base().Foreground(th.Error)
 	hintY := h - 2
 	switch {
-	case a.errorMsg != "":
+	case a.errorMsg != "" && a.getOverlay() == nil && a.home != nil:
+		a.home.DrawErrorBanner(a.screen, bounds, a.errorMsg, style)
+	case a.errorMsg != "" && a.getOverlay() == nil:
 		components.DrawText(a.screen, 2, hintY, a.errorMsg, style)
-	case a.escHint:
+	case a.escHint && a.getOverlay() == nil:
 		components.DrawText(a.screen, 2, hintY, "Press Esc to interrupt", style)
 	}
 	a.screen.Show()

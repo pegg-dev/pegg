@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	agentmw "github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/llm"
+	agentmw "github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type responseRecord struct {

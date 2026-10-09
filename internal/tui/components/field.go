@@ -3,8 +3,8 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type Field struct {
@@ -16,6 +16,9 @@ type Field struct {
 	focused     bool
 	onEnter     func(string)
 	onCancel    func()
+
+	box   layout.Region
+	inner layout.Region
 }
 
 func NewField(title string) *Field { return &Field{title: title} }
@@ -31,6 +34,12 @@ func (f *Field) SetOnCancel(fn func()) { f.onCancel = fn }
 func (f *Field) Value() string { return string(f.value) }
 
 func (f *Field) Focus() { f.focused = true }
+
+func (f *Field) Cancel() {
+	if f.onCancel != nil {
+		f.onCancel()
+	}
+}
 
 func (f *Field) SetText(s string) {
 	f.value = []rune(s)
@@ -89,6 +98,28 @@ func (f *Field) HandleKey(ev *tcell.EventKey) bool {
 	return false
 }
 
+func (f *Field) HandleMouse(x, y int, buttons tcell.ButtonMask) bool {
+	if buttons&tcell.ButtonPrimary == 0 {
+		return false
+	}
+	if f.box.Width == 0 || y < f.box.Top || y >= f.box.Bottom() {
+		return false
+	}
+	if x < f.box.Left || x >= f.box.Right() {
+		return false
+	}
+	pos := x - f.inner.Left
+	if pos < 0 {
+		pos = 0
+	}
+	if pos > len(f.value) {
+		pos = len(f.value)
+	}
+	f.pos = pos
+	f.focused = true
+	return true
+}
+
 func (f *Field) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 	th := styles.Current()
 
@@ -97,6 +128,8 @@ func (f *Field) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 	box := layout.Region{Left: bounds.Left, Top: bounds.Top + 1, Width: bounds.Width, Height: 3}
 	DrawBox(s, box, th.Base().Foreground(th.Border))
 	inner := layout.Pad(box, 1, 1)
+	f.box = box
+	f.inner = inner
 
 	var display []rune
 	if len(f.value) > 0 {

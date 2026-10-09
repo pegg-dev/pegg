@@ -1,7 +1,7 @@
 package skills
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func InitSkill() *prompt.Prompt {
@@ -13,9 +13,9 @@ func InitSkill() *prompt.Prompt {
 		Paragraph("context: inline").
 		Hr(3).
 		Paragraph("").
-		Paragraph("Analyze this codebase and create a AGENTS.md file, which will be given to future instances of Vesvai to operate in this repository.").
+		Paragraph("Analyze this codebase and create a AGENTS.md file, which will be given to future instances of Pegg to operate in this repository.").
 		Paragraph("About AGENTS.md:").
-		Paragraph("Modern AI coding tools converge on a simple idea: give the agent a single, well-structured Markdown file that explains how your repo \"works,\" and prepend that file to every LLM call so the agent never has to guess about architecture, commands, or conventions. Community gists, RFCs, and vendor playbooks all recommend the same core sections\u2014overview, project map, build/test scripts, code style, security, and other relevant information. This file is intended to be that single source of truth for Vesvai.").
+		Paragraph("Modern AI coding tools converge on a simple idea: give the agent a single, well-structured Markdown file that explains how your repo \"works,\" and prepend that file to every LLM call so the agent never has to guess about architecture, commands, or conventions. Community gists, RFCs, and vendor playbooks all recommend the same core sections\u2014overview, project map, build/test scripts, code style, security, and other relevant information. This file is intended to be that single source of truth for Pegg.").
 		Paragraph("What to add:").
 		OrderedList(
 			"Commands that will be commonly used, such as how to build, lint, and run tests. Include the necessary commands to develop in this codebase, such as how to run a single test.",
@@ -32,7 +32,7 @@ func InitSkill() *prompt.Prompt {
 			"Do not make up information such as \"Common Development Tasks\", \"Tips for Development\", \"Support and Documentation\" unless this is expressly included in other files that you read.",
 		).
 		Paragraph("Be sure to prefix the file with the following text:").
-		Code("", "# AGENTS.md\n\nThis file provides guidance to Vesvai when working with code in this repository.").
+		Code("", "# AGENTS.md\n\nThis file provides guidance to Pegg when working with code in this repository.").
 		Paragraph("Required Sections:").
 		OrderedList(
 			"Project Overview \u2013 one-paragraph description and elevator pitch.",

@@ -4,7 +4,7 @@ icon: lucide/hammer
 
 # Development Guide
 
-Step-by-step guide to building Vesvai plugins.
+Step-by-step guide to building Pegg plugins.
 
 ## Project structure
 
@@ -37,7 +37,7 @@ go mod init github.com/username/my-plugin
 
 # Add dependencies
 go get github.com/hashicorp/go-plugin@latest
-go get github.com/vesvai/vesvai@latest
+go get github.com/peggco/pegg@latest
 go get github.com/hashicorp/go-hclog@latest
 ```
 
@@ -51,7 +51,7 @@ package main
 import (
     "fmt"
 
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 type MyPlugin struct {
@@ -68,7 +68,7 @@ func (p *MyPlugin) Version() string {
 }
 
 func (p *MyPlugin) Description() string {
-    return "A custom Vesvai plugin"
+    return "A custom Pegg plugin"
 }
 
 func (p *MyPlugin) Boot(deps shared.Deps) error {
@@ -97,7 +97,7 @@ import (
 
     "github.com/hashicorp/go-hclog"
     "github.com/hashicorp/go-plugin"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 func main() {
@@ -112,7 +112,7 @@ func main() {
     plugin.Serve(&plugin.ServeConfig{
         HandshakeConfig: shared.Handshake,
         Plugins: map[string]plugin.Plugin{
-            "vesvai": &shared.VesvaiPluginRPC{
+            "pegg": &shared.PeggPluginRPC{
                 Impl: &MyPlugin{},
             },
         },
@@ -131,13 +131,13 @@ go build -o my-plugin .
 ./my-plugin --help
 
 # Install
-mkdir -p ~/.vesvai/plugins
-cp my-plugin ~/.vesvai/plugins/
-chmod +x ~/.vesvai/plugins/my-plugin
+mkdir -p ~/.pegg/plugins
+cp my-plugin ~/.pegg/plugins/
+chmod +x ~/.pegg/plugins/my-plugin
 
 # Verify
-vesvai plugin list
-vesvai plugin info my-plugin
+pegg plugin list
+pegg plugin info my-plugin
 ```
 
 ## Example: Provider checker plugin
@@ -153,8 +153,8 @@ import (
 
     "github.com/hashicorp/go-hclog"
     "github.com/hashicorp/go-plugin"
-    "github.com/vesvai/vesvai/internal/core/config"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/core/config"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 type ProviderChecker struct {
@@ -203,7 +203,7 @@ func main() {
     plugin.Serve(&plugin.ServeConfig{
         HandshakeConfig: shared.Handshake,
         Plugins: map[string]plugin.Plugin{
-            "vesvai": &shared.VesvaiPluginRPC{
+            "pegg": &shared.PeggPluginRPC{
                 Impl: &ProviderChecker{},
             },
         },
@@ -219,7 +219,7 @@ This plugin logs all events published on the bus.
 !!! note
     Event bus access requires a different architecture since interfaces can't be
     serialized over RPC. This example shows the pattern for plugins that need to
-    interact with Vesvai's event system.
+    interact with Pegg's event system.
 
 ```go
 package main
@@ -230,7 +230,7 @@ import (
 
     "github.com/hashicorp/go-hclog"
     "github.com/hashicorp/go-plugin"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 type EventLogger struct{}
@@ -244,12 +244,12 @@ func (p *EventLogger) Version() string {
 }
 
 func (p *EventLogger) Description() string {
-    return "Logs Vesvai events"
+    return "Logs Pegg events"
 }
 
 func (p *EventLogger) Boot(deps shared.Deps) error {
     fmt.Println("Event logger plugin loaded")
-    fmt.Printf("Vesvai config loaded with %d providers\n", len(deps.Config.Providers))
+    fmt.Printf("Pegg config loaded with %d providers\n", len(deps.Config.Providers))
 
     // In a real plugin, you would connect to the event bus
     // via a custom RPC service or other mechanism
@@ -267,7 +267,7 @@ func main() {
     plugin.Serve(&plugin.ServeConfig{
         HandshakeConfig: shared.Handshake,
         Plugins: map[string]plugin.Plugin{
-            "vesvai": &shared.VesvaiPluginRPC{
+            "pegg": &shared.PeggPluginRPC{
                 Impl: &EventLogger{},
             },
         },
@@ -336,7 +336,7 @@ func (p *MyPlugin) Boot(deps shared.Deps) error {
 ### Logging
 
 Use `fmt.Println` or `fmt.Fprintf` for user-facing output. The plugin's stderr
-is forwarded to Vesvai's logs.
+is forwarded to Pegg's logs.
 
 ```go
 func (p *MyPlugin) Boot(deps shared.Deps) error {
@@ -363,8 +363,8 @@ package main
 import (
     "testing"
 
-    "github.com/vesvai/vesvai/internal/core/config"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/core/config"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 func TestBoot(t *testing.T) {
@@ -418,7 +418,7 @@ import (
     "testing"
 
     "github.com/hashicorp/go-plugin"
-    "github.com/vesvai/vesvai/internal/plugin/shared"
+    "github.com/peggco/pegg/internal/plugin/shared"
 )
 
 func TestPluginServe(t *testing.T) {
@@ -444,7 +444,7 @@ func TestPluginServe(t *testing.T) {
     }
 
     // Dispense
-    raw, err := rpcClient.Dispense("vesvai")
+    raw, err := rpcClient.Dispense("pegg")
     if err != nil {
         t.Fatalf("dispense failed: %v", err)
     }
@@ -488,18 +488,18 @@ Test your plugin standalone:
 echo $?  # Exit code
 ```
 
-### Check Vesvai logs
+### Check Pegg logs
 
 ```bash
-vesvai logs --search plugin
-vesvai logs --search my-plugin
+pegg logs --search plugin
+pegg logs --search my-plugin
 ```
 
 ### Common issues
 
 | Issue | Solution |
 |---|---|
-| Plugin not appearing | Check file has execute permission in `~/.vesvai/plugins/` |
+| Plugin not appearing | Check file has execute permission in `~/.pegg/plugins/` |
 | Boot fails | Check logs for error message |
 | Plugin crashes | Check stderr output and logs |
 | RPC errors | Ensure `shared.Handshake` is used correctly |

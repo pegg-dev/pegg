@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func TestBuiltinSkillsBuildAndParse(t *testing.T) {
@@ -44,9 +44,9 @@ func TestBuiltinSkillsBuildAndParse(t *testing.T) {
 	}
 }
 
-func TestSkillifyMentionsVesvaiPaths(t *testing.T) {
+func TestSkillifyMentionsPeggPaths(t *testing.T) {
 	out := SkillifySkill().MustBuild(prompt.FormatMarkdown)
-	for _, want := range []string{".vesvai/skills/", "~/.vesvai/skills/", "askuserquestion", "SKILL.md"} {
+	for _, want := range []string{".pegg/skills/", "~/.pegg/skills/", "askuserquestion", "SKILL.md"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("skillify output missing %q", want)
 		}

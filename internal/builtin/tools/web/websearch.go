@@ -11,9 +11,9 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/vfs"
 	"golang.org/x/net/html"
 )
 
@@ -78,7 +78,7 @@ func websearchTool(fs *vfs.VFS) tool.Tool {
 				return "", fmt.Errorf("websearch: create request: %w", err)
 			}
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Vesvai/1.0)")
+			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Pegg/1.0)")
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {

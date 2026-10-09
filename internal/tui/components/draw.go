@@ -3,7 +3,7 @@ package components
 import (
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/layout"
 )
 
 func FillRegion(s tcell.Screen, r layout.Region, ch rune, style tcell.Style) {

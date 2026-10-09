@@ -9,7 +9,7 @@ This page documents the plugin interface, types, and method signatures.
 ## Import
 
 ```go
-import "github.com/vesvai/vesvai/internal/plugin/shared"
+import "github.com/peggco/pegg/internal/plugin/shared"
 ```
 
 ## Plugin Interface
@@ -31,7 +31,7 @@ type Plugin interface {
 
 Returns the unique name of the plugin. This name is used for:
 
-- Identifying the plugin in `vesvai plugin list`
+- Identifying the plugin in `pegg plugin list`
 - Excluding plugins via configuration
 - Logging
 
@@ -81,7 +81,7 @@ initialization.
 - Called once when the plugin is first loaded
 - Called in the plugin's separate process
 - Return `nil` for successful initialization
-- Return an error to fail plugin loading (Vesvai continues without the plugin)
+- Return an error to fail plugin loading (Pegg continues without the plugin)
 
 ## Deps Struct
 
@@ -101,7 +101,7 @@ type Deps struct {
 
 ### Config Access
 
-The `Config` field provides access to the full Vesvai configuration:
+The `Config` field provides access to the full Pegg configuration:
 
 ```go
 func (p *MyPlugin) Boot(deps shared.Deps) error {
@@ -143,7 +143,7 @@ func (p *MyPlugin) Boot(deps shared.Deps) error {
 
 ## RPC Communication
 
-Plugins communicate with Vesvai via RPC using
+Plugins communicate with Pegg via RPC using
 [HashiCorp go-plugin](https://github.com/hashicorp/go-plugin). The RPC layer is
 handled automatically — you only need to implement the `Plugin` interface.
 
@@ -154,20 +154,20 @@ The handshake configuration is pre-defined in the shared package:
 ```go
 var Handshake = plugin.HandshakeConfig{
     ProtocolVersion:  1,
-    MagicCookieKey:   "VESVAI_PLUGIN",
-    MagicCookieValue: "vesvai",
+    MagicCookieKey:   "PEGG_PLUGIN",
+    MagicCookieValue: "pegg",
 }
 ```
 
 ### Plugin Registration
 
-Register your plugin with the Vesvai plugin map:
+Register your plugin with the Pegg plugin map:
 
 ```go
 plugin.Serve(&plugin.ServeConfig{
     HandshakeConfig: shared.Handshake,
     Plugins: map[string]plugin.Plugin{
-        "vesvai": &shared.VesvaiPluginRPC{
+        "pegg": &shared.PeggPluginRPC{
             Impl: &MyPlugin{},
         },
     },
@@ -210,6 +210,6 @@ If `Boot` returns an error:
 
 1. The plugin process is terminated
 2. A warning is logged
-3. Vesvai continues without the plugin
+3. Pegg continues without the plugin
 
 This ensures plugin failures don't crash the application.

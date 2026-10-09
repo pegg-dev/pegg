@@ -1,16 +1,17 @@
 package builtin
 
 import (
-	"github.com/vesvai/vesvai/internal/builtin/agents"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares"
-	"github.com/vesvai/vesvai/internal/builtin/reminders"
-	"github.com/vesvai/vesvai/internal/builtin/tools"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/decision"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/builtin/agents"
+	"github.com/peggco/pegg/internal/builtin/middlewares"
+	"github.com/peggco/pegg/internal/builtin/reminders"
+	"github.com/peggco/pegg/internal/builtin/tools"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type Options struct {
@@ -18,6 +19,7 @@ type Options struct {
 	Decision *decision.Manager
 	Config   *config.Config
 	Bus      event.Bus
+	Memory   *memory.Manager
 }
 
 func Create(fs *vfs.VFS, sess *session.Manager, opts Options) error {
@@ -29,6 +31,14 @@ func Create(fs *vfs.VFS, sess *session.Manager, opts Options) error {
 		Sessions: sess,
 	})
 	tools.Create(fs, sess)
+	if opts.Memory != nil {
+		if err := opts.Memory.Start(); err != nil {
+			return err
+		}
+		if err := memory.RegisterTools(opts.Memory); err != nil {
+			return err
+		}
+	}
 	if err := reminders.Create(opts.Bus); err != nil {
 		return err
 	}

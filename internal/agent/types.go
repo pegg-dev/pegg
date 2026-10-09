@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/middleware"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type RunResult = middleware.Result

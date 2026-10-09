@@ -1,7 +1,7 @@
 package skills
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func ReviewSkill() *prompt.Prompt {

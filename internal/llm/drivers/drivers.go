@@ -1,7 +1,7 @@
 package drivers
 
 import (
-	_ "github.com/vesvai/vesvai/internal/llm/drivers/claude"
-	_ "github.com/vesvai/vesvai/internal/llm/drivers/gemini"
-	_ "github.com/vesvai/vesvai/internal/llm/drivers/openai"
+	_ "github.com/peggco/pegg/internal/llm/drivers/claude"
+	_ "github.com/peggco/pegg/internal/llm/drivers/gemini"
+	_ "github.com/peggco/pegg/internal/llm/drivers/openai"
 )

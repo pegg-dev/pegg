@@ -1,11 +1,11 @@
 package sdk
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/agent/middlewares"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/skill"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/agent/middlewares"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/skill"
 )
 
 func (e *Engine) RegisterTool(t Tool) error {

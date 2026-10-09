@@ -1,12 +1,15 @@
-module github.com/vesvai/vesvai
+module github.com/peggco/pegg
 
 go 1.26.5
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/alecthomas/chroma/v2 v2.27.0
+	github.com/coder/websocket v1.8.15
 	github.com/creativeprojects/go-selfupdate v1.6.0
 	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gen2brain/beeep v0.11.2
 	github.com/goccy/go-json v0.10.6
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-hclog v1.6.3
@@ -16,6 +19,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/yuin/goldmark v1.8.6
 	golang.org/x/net v0.58.0
+	golang.org/x/term v0.45.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.56.0
 )
@@ -25,7 +29,6 @@ require (
 	git.sr.ht/~jackmordaunt/go-toast v1.1.2 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
-	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
@@ -33,7 +36,6 @@ require (
 	github.com/esiqveland/notify v0.13.3 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/gen2brain/beeep v0.11.2 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
@@ -62,7 +64,6 @@ require (
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect

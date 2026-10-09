@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/utils/http"
-	"github.com/vesvai/vesvai/internal/utils/tar"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/utils/http"
+	"github.com/peggco/pegg/internal/utils/tar"
 )
 
 const installTimeout = 5 * time.Minute

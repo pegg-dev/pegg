@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func TestRetryBackoffSchedule(t *testing.T) {

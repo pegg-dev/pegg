@@ -1,6 +1,6 @@
 # Solve issue — additional instructions
 
-Appended to vesvabot's default solve-issue prompt. Repository rules for vesvai:
+Appended to peggbot's default solve-issue prompt. Repository rules for pegg:
 
 - Build and verify with `make build`, `make test`, `make lint`, `make vet`.
 - Keep code `gofmt`-clean and conventional-commit messages (`fix: ...`,
@@ -10,6 +10,6 @@ Appended to vesvabot's default solve-issue prompt. Repository rules for vesvai:
   Keep changes in the right layer.
 - Changes to `internal/agent/` or `internal/llm/` are sensitive: keep them
   minimal and add tests (`go test -v ./internal/agent/...`).
-- Never edit `.vesvai/`, `.env` files, or any `secrets` files.
+- Never edit `.pegg/`, `.env` files, or any `secrets` files.
 - If a fix needs a new config field, add the default to the config package
   and document it under `docs/`.

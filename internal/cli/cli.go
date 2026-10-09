@@ -7,20 +7,22 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/agent/agents"
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/hook"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/lsp"
-	"github.com/vesvai/vesvai/internal/mcp"
-	"github.com/vesvai/vesvai/internal/plugin"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/tui"
-	"github.com/vesvai/vesvai/internal/tui/page/settings"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/agents"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/hook"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/decision"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/lsp"
+	"github.com/peggco/pegg/internal/mcp"
+	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/plugin"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/tui"
+	"github.com/peggco/pegg/internal/tui/page/settings"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type CLI struct {
@@ -29,6 +31,8 @@ type CLI struct {
 	log       *logger.Logger
 	sessions  *session.Manager
 	llmMgr    *llm.Manager
+	memMgr    *memory.Manager
+	decMgr    *decision.Manager
 	mcpMgr    *mcp.Manager
 	lspMgr    *lsp.Manager
 	fs        *vfs.VFS
@@ -40,7 +44,7 @@ type CLI struct {
 	picker    func(items []string, label string) (int, error)
 }
 
-func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, sessions *session.Manager, llmMgr *llm.Manager, mcpMgr *mcp.Manager, lspMgr *lsp.Manager, cache cache.Cache, pluginMgr *plugin.Manager) *CLI {
+func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, sessions *session.Manager, llmMgr *llm.Manager, decMgr *decision.Manager, memMgr *memory.Manager, mcpMgr *mcp.Manager, lspMgr *lsp.Manager, cache cache.Cache, pluginMgr *plugin.Manager) *CLI {
 	c := &CLI{
 		bus:       bus,
 		cfg:       cfg,
@@ -49,6 +53,8 @@ func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, se
 		cache:     cache,
 		sessions:  sessions,
 		llmMgr:    llmMgr,
+		decMgr:    decMgr,
+		memMgr:    memMgr,
 		mcpMgr:    mcpMgr,
 		lspMgr:    lspMgr,
 		pluginMgr: pluginMgr,
@@ -86,8 +92,8 @@ func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, se
 
 func newRootCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "vesvai",
-		Short: "vesvai command line interface",
+		Use:   "pegg",
+		Short: "pegg command line interface",
 		Args:  cobra.ArbitraryArgs,
 	}
 }
@@ -100,6 +106,7 @@ func (c *CLI) registerDefaultCommands() {
 	c.OnRegisterCommand(func(cmds []*cobra.Command) []*cobra.Command {
 		return append(cmds,
 			c.newLoginCommand(),
+			c.newLogoutCommand(),
 			c.newLogsCommand(),
 			c.newFilesCommand(),
 			c.newCacheCommand(),
@@ -113,6 +120,7 @@ func (c *CLI) registerDefaultCommands() {
 			c.newLSPCommand(),
 			c.newTUICommand(),
 			c.newServeCommand(),
+			c.newConnectCommand(),
 			c.newPluginCommand(),
 			c.newVersionCommand(),
 			c.newUpdateCommand(),
@@ -129,6 +137,8 @@ func (c *CLI) tuiDeps() (settings.Deps, error) {
 	return settings.Deps{
 		Config:   c.cfg,
 		LLM:      c.llmMgr,
+		Decision: c.decMgr,
+		Memory:   c.memMgr,
 		MCP:      c.mcpMgr,
 		Sessions: c.sessions,
 		Agent:    orch,

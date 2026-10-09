@@ -11,9 +11,9 @@ import (
 	json "github.com/goccy/go-json"
 
 	md "github.com/JohannesKaufmann/html-to-markdown/v2"
-	"github.com/vesvai/vesvai/internal/agent/prompt"
-	"github.com/vesvai/vesvai/internal/agent/tool"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/tool"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func generateWebfetchToolPrompt() (string, error) {
@@ -83,7 +83,7 @@ func webfetchTool(fs *vfs.VFS) tool.Tool {
 			if err != nil {
 				return "", fmt.Errorf("webfetch: create request: %w", err)
 			}
-			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Vesvai/1.0)")
+			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Pegg/1.0)")
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {

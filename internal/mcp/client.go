@@ -50,7 +50,7 @@ func (c *Client) Initialize(ctx context.Context) (InitializeResult, error) {
 			"protocolVersion": ProtocolVersion,
 			"capabilities":    map[string]any{},
 			"clientInfo": map[string]any{
-				"name":    "vesvai",
+				"name":    "pegg",
 				"version": "0.1.0",
 			},
 		}, &result)

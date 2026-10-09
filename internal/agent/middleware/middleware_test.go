@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type recorder struct {

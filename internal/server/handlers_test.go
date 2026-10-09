@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/session"
+	"github.com/peggco/pegg/internal/session"
 )
 
 func TestHandleHealth(t *testing.T) {

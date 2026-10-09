@@ -7,10 +7,10 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/creativeprojects/go-selfupdate"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
-const repoSlug = "vesvai/vesvai"
+const repoSlug = "peggco/pegg"
 
 type Release struct {
 	Version string

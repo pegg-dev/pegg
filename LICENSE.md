@@ -6,7 +6,7 @@ FSL-1.1-MIT
 
 ## Notice
 
-Copyright 2026-2027 vesv.ai
+Copyright 2026-2027 pegg.dev
 
 ## Terms and Conditions
 

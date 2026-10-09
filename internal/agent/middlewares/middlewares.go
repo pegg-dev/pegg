@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/middleware"
+	"github.com/peggco/pegg/internal/agent/middleware"
 )
 
 var reg = middleware.NewMiddlewareRegistry()

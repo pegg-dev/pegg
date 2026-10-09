@@ -15,6 +15,7 @@ const (
 	ActionQuit
 	ActionThemeNext
 	ActionSettings
+	ActionCopy
 )
 
 var globalBindings = map[keyCombo]keyAction{
@@ -22,11 +23,19 @@ var globalBindings = map[keyCombo]keyAction{
 	{key: tcell.KeyCtrlQ}: ActionQuit,
 	{key: tcell.KeyCtrlT}: ActionThemeNext,
 	{key: tcell.KeyCtrlP}: ActionSettings,
+	{key: tcell.KeyCtrlC, mod: tcell.ModCtrl | tcell.ModShift}:           ActionCopy,
+	{key: tcell.KeyRune, rune: 'c', mod: tcell.ModCtrl | tcell.ModShift}: ActionCopy,
+	{key: tcell.KeyRune, rune: 'C', mod: tcell.ModCtrl | tcell.ModShift}: ActionCopy,
 }
 
 func resolveGlobal(ev *tcell.EventKey) keyAction {
+	combo := keyCombo{key: ev.Key(), mod: ev.Modifiers()}
 	if ev.Key() == tcell.KeyRune {
-		return globalBindings[keyCombo{key: ev.Key(), rune: ev.Rune()}]
+		combo.rune = ev.Rune()
 	}
-	return globalBindings[keyCombo{key: ev.Key()}]
+	if a, ok := globalBindings[combo]; ok {
+		return a
+	}
+	combo.mod = 0
+	return globalBindings[combo]
 }

@@ -3,7 +3,7 @@ package decision
 import (
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 func TestRegisterAndListProviders(t *testing.T) {

@@ -1,8 +1,8 @@
 package lsps
 
 import (
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/lsp"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/lsp"
 )
 
 func init() {
@@ -39,14 +39,14 @@ func init() {
 		Args:        []string{},
 		FileTypes:   []string{"clj", "cljs", "cljc", "edn"},
 		RootMarkers: []string{"deps.edn", "project.clj", "bb.edn"},
-		Install:     "(brew install clojure-lsp 2>/dev/null) || (curl -sL -o \"$HOME/.vesvai/lsps/clojure-lsp.zip\" https://github.com/clojure-lsp/clojure-lsp/releases/latest/download/clojure-lsp-native-static-linux-amd64.zip)",
+		Install:     "(brew install clojure-lsp 2>/dev/null) || (curl -sL -o \"$HOME/.pegg/lsps/clojure-lsp.zip\" https://github.com/clojure-lsp/clojure-lsp/releases/latest/download/clojure-lsp-native-static-linux-amd64.zip)",
 	})
 	lsp.Register("dart", config.LanguageServerConfig{
 		Command:     "dart",
 		Args:        []string{"language-server", "--protocol=lsp"},
 		FileTypes:   []string{"dart"},
 		RootMarkers: []string{"pubspec.yaml"},
-		Install:     `curl -sL -o /tmp/dartsdk.zip https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip && unzip -q -o /tmp/dartsdk.zip -d "$HOME/.vesvai" && ln -sf "$HOME/.vesvai/dart-sdk/bin/dart" "$HOME/.vesvai/lsps/dart"`,
+		Install:     `curl -sL -o /tmp/dartsdk.zip https://storage.googleapis.com/dart-archive/channels/stable/release/latest/sdk/dartsdk-linux-x64-release.zip && unzip -q -o /tmp/dartsdk.zip -d "$HOME/.pegg" && ln -sf "$HOME/.pegg/dart-sdk/bin/dart" "$HOME/.pegg/lsps/dart"`,
 	})
 	lsp.Register("deno", config.LanguageServerConfig{
 		Command:     "deno",
@@ -60,7 +60,7 @@ func init() {
 		Args:        []string{},
 		FileTypes:   []string{"ex", "exs"},
 		RootMarkers: []string{"mix.exs"},
-		Install:     "(brew install elixir-ls 2>/dev/null) || (git clone --depth 1 https://github.com/elixir-lsp/elixir-lsp \"$HOME/.vesvai/elixir-ls\" && cd \"$HOME/.vesvai/elixir-ls\" && mix deps.get && mix compile && mix escript.build && cp elixir-ls \"$HOME/.vesvai/lsps/elixir-ls\")",
+		Install:     "(brew install elixir-ls 2>/dev/null) || (git clone --depth 1 https://github.com/elixir-lsp/elixir-lsp \"$HOME/.pegg/elixir-ls\" && cd \"$HOME/.pegg/elixir-ls\" && mix deps.get && mix compile && mix escript.build && cp elixir-ls \"$HOME/.pegg/lsps/elixir-ls\")",
 	})
 	lsp.Register("eslint", config.LanguageServerConfig{
 		Command:     "vscode-eslint-language-server",
@@ -81,7 +81,7 @@ func init() {
 		Args:        []string{"lsp"},
 		FileTypes:   []string{"gleam"},
 		RootMarkers: []string{"gleam.toml"},
-		Install:     `V=$(curl -s https://api.github.com/repos/gleam-lang/gleam/releases/latest | grep -o '"tag_name":"[^"]*"' | sed 's/.*:"//;s/"//') && curl -sL -o "$HOME/.vesvai/lsps/gleam.tar.gz" "https://github.com/gleam-lang/gleam/releases/download/$V/gleam-x86_64-unknown-linux-musl.tar.gz"`,
+		Install:     `V=$(curl -s https://api.github.com/repos/gleam-lang/gleam/releases/latest | grep -o '"tag_name":"[^"]*"' | sed 's/.*:"//;s/"//') && curl -sL -o "$HOME/.pegg/lsps/gleam.tar.gz" "https://github.com/gleam-lang/gleam/releases/download/$V/gleam-x86_64-unknown-linux-musl.tar.gz"`,
 	})
 	lsp.Register("gopls", config.LanguageServerConfig{
 		Command:     "gopls",
@@ -102,7 +102,7 @@ func init() {
 		Args:        []string{},
 		FileTypes:   []string{"java"},
 		RootMarkers: []string{"pom.xml", "build.gradle", "settings.gradle", ".project"},
-		Install:     `curl -sL -o /tmp/jdtls.tar.gz https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && mkdir -p "$HOME/.vesvai/jdtls" && tar -xzf /tmp/jdtls.tar.gz -C "$HOME/.vesvai/jdtls" && cp "$HOME/.vesvai/jdtls/bin/jdtls" "$HOME/.vesvai/lsps/jdtls"`,
+		Install:     `curl -sL -o /tmp/jdtls.tar.gz https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && mkdir -p "$HOME/.pegg/jdtls" && tar -xzf /tmp/jdtls.tar.gz -C "$HOME/.pegg/jdtls" && cp "$HOME/.pegg/jdtls/bin/jdtls" "$HOME/.pegg/lsps/jdtls"`,
 	})
 	lsp.Register("julials", config.LanguageServerConfig{
 		Command:     "julia",
@@ -130,14 +130,14 @@ func init() {
 		Args:        []string{},
 		FileTypes:   []string{"nix"},
 		RootMarkers: []string{"flake.nix", "shell.nix", "default.nix"},
-		Install:     "(nix profile install nixpkgs#nixd 2>/dev/null) || (nix-env -iA nixpkgs.nixd 2>/dev/null) || (git clone --depth 1 https://github.com/nix-community/nixd \"$HOME/.vesvai/nixd\" && cmake -S \"$HOME/.vesvai/nixd\" -B \"$HOME/.vesvai/nixd/build\" -DCMAKE_BUILD_TYPE=Release && cmake --build \"$HOME/.vesvai/nixd/build\" -j4 && cp \"$HOME/.vesvai/nixd/build/bin/nixd\" \"$HOME/.vesvai/lsps/nixd\")",
+		Install:     "(nix profile install nixpkgs#nixd 2>/dev/null) || (nix-env -iA nixpkgs.nixd 2>/dev/null) || (git clone --depth 1 https://github.com/nix-community/nixd \"$HOME/.pegg/nixd\" && cmake -S \"$HOME/.pegg/nixd\" -B \"$HOME/.pegg/nixd/build\" -DCMAKE_BUILD_TYPE=Release && cmake --build \"$HOME/.pegg/nixd/build\" -j4 && cp \"$HOME/.pegg/nixd/build/bin/nixd\" \"$HOME/.pegg/lsps/nixd\")",
 	})
 	lsp.Register("ocaml-lsp", config.LanguageServerConfig{
 		Command:     "ocamllsp",
 		Args:        []string{},
 		FileTypes:   []string{"ml", "mli"},
 		RootMarkers: []string{"dune-project", "*.opam"},
-		Install:     `opam install -y ocaml-lsp-server && cp "$(opam var bin)/ocamllsp" "$HOME/.vesvai/lsps/ocamllsp"`,
+		Install:     `opam install -y ocaml-lsp-server && cp "$(opam var bin)/ocamllsp" "$HOME/.pegg/lsps/ocamllsp"`,
 	})
 	lsp.Register("oxlint", config.LanguageServerConfig{
 		Command:     "oxlint",
@@ -207,14 +207,14 @@ func init() {
 		Args:        []string{"serve"},
 		FileTypes:   []string{"tf", "tfvars"},
 		RootMarkers: []string{".terraform.lock.hcl", "*.tf"},
-		Install:     `V=$(curl -sL https://releases.hashicorp.com/terraform-ls/index.json | grep -o '"0\.[0-9]*\.[0-9]*"' | tr -d '"' | sort -uV | tail -1) && curl -sL -o "$HOME/.vesvai/lsps/terraform-ls.zip" "https://releases.hashicorp.com/terraform-ls/$V/terraform-ls_${V}_linux_amd64.zip"`,
+		Install:     `V=$(curl -sL https://releases.hashicorp.com/terraform-ls/index.json | grep -o '"0\.[0-9]*\.[0-9]*"' | tr -d '"' | sort -uV | tail -1) && curl -sL -o "$HOME/.pegg/lsps/terraform-ls.zip" "https://releases.hashicorp.com/terraform-ls/$V/terraform-ls_${V}_linux_amd64.zip"`,
 	})
 	lsp.Register("tinymist", config.LanguageServerConfig{
 		Command:     "tinymist",
 		Args:        []string{"lsp"},
 		FileTypes:   []string{"typ", "typc"},
 		RootMarkers: []string{"typst.toml"},
-		Install:     "curl -sL -o \"$HOME/.vesvai/lsps/tinymist.tar.gz\" https://github.com/Myriad-Dreamin/tinymist/releases/latest/download/tinymist-x86_64-unknown-linux-gnu.tar.gz",
+		Install:     "curl -sL -o \"$HOME/.pegg/lsps/tinymist.tar.gz\" https://github.com/Myriad-Dreamin/tinymist/releases/latest/download/tinymist-x86_64-unknown-linux-gnu.tar.gz",
 	})
 	lsp.Register("typescript", config.LanguageServerConfig{
 		Command:     "typescript-language-server",
@@ -242,6 +242,6 @@ func init() {
 		Args:        []string{},
 		FileTypes:   []string{"zig", "zon"},
 		RootMarkers: []string{"build.zig"},
-		Install:     "(brew install zls 2>/dev/null) || (cargo install zls --locked 2>/dev/null) || (curl -sL -o \"$HOME/.vesvai/lsps/zls.tar.xz\" https://github.com/zigtools/zls/releases/latest/download/zls-x86_64-linux.tar.xz && tar -xJf \"$HOME/.vesvai/lsps/zls.tar.xz\" -C \"$HOME/.vesvai/lsps\" zls)",
+		Install:     "(brew install zls 2>/dev/null) || (cargo install zls --locked 2>/dev/null) || (curl -sL -o \"$HOME/.pegg/lsps/zls.tar.xz\" https://github.com/zigtools/zls/releases/latest/download/zls-x86_64-linux.tar.xz && tar -xJf \"$HOME/.pegg/lsps/zls.tar.xz\" -C \"$HOME/.pegg/lsps\" zls)",
 	})
 }

@@ -9,13 +9,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/llm/credentials"
+	"github.com/peggco/pegg/internal/llm/subscription"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type discardHandler struct{}
@@ -62,7 +64,7 @@ func newTestCLI(t *testing.T) (*CLI, event.Bus) {
 	}
 	t.Cleanup(func() { sess.Close() })
 
-	c := New(bus, cfg, testLogger(), fs, sess, mgr, nil, nil, nil, nil)
+	c := New(bus, cfg, testLogger(), fs, sess, mgr, nil, nil, nil, nil, nil, nil)
 	return c, bus
 }
 
@@ -119,6 +121,57 @@ func TestLoginSavesConfigAndPublishesEvent(t *testing.T) {
 		loaded.Providers[0].Provider != "testprov" ||
 		loaded.Providers[0].APIKey != "sk-123" {
 		t.Fatalf("config providers: %+v", loaded.Providers)
+	}
+}
+
+func TestLoginSubscriptionProvider(t *testing.T) {
+	c, bus := newTestCLI(t)
+	registerTestProvider(t, "fakesub")
+	subscription.Register(subscription.Info{
+		Provider: "fakesub",
+		Hint:     "run fake-cli",
+		Status:   func() credentials.Status { return credentials.Status{Provider: "fakesub", LoggedIn: true} },
+	})
+
+	added := make(chan config.LLMConfig, 1)
+	if err := bus.Subscribe(event.TopicProviderAdded, func(cfg config.LLMConfig) { added <- cfg }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.runLogin("fakesub", "", func() (string, error) { return "", nil }, func() (string, error) { return "", nil }); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case cfg := <-added:
+		if cfg.Provider != "fakesub" || cfg.APIKey != "" {
+			t.Fatalf("cfg = %+v, want provider fakesub with no api key", cfg)
+		}
+	default:
+		t.Fatal("provider.added not published")
+	}
+
+	if err := c.runLogout("fakesub"); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loaded.Providers) != 0 {
+		t.Fatalf("providers after logout = %+v, want none", loaded.Providers)
+	}
+}
+
+func TestLoginSubscriptionNotSignedIn(t *testing.T) {
+	c, _ := newTestCLI(t)
+	registerTestProvider(t, "fakesub2")
+	subscription.Register(subscription.Info{
+		Provider: "fakesub2",
+		Hint:     "run fake-cli",
+		Status:   func() credentials.Status { return credentials.Status{Provider: "fakesub2", LoggedIn: false} },
+	})
+	if err := c.runLogin("fakesub2", "", func() (string, error) { return "", nil }, func() (string, error) { return "", nil }); err == nil {
+		t.Fatal("expected error when the subscription is not signed in")
 	}
 }
 

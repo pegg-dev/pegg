@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type mockProvider struct {
@@ -159,8 +159,10 @@ func TestChatStream(t *testing.T) {
 }
 
 func TestChatRequiresProvider(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Providers = nil
 	eng, err := Open(context.Background(), Options{
-		Config:     config.DefaultConfig(),
+		Config:     cfg,
 		Workspace:  t.TempDir(),
 		SessionDir: t.TempDir() + "/s",
 	})

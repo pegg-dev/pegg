@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	utiltar "github.com/vesvai/vesvai/internal/utils/tar"
+	"github.com/peggco/pegg/internal/core/config"
+	utiltar "github.com/peggco/pegg/internal/utils/tar"
 )
 
 func makeZip(t *testing.T, name string, body []byte) []byte {
@@ -91,7 +91,7 @@ func TestResolveBinaryDownloadZipToCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(home, ".vesvai", "lsps", "terraform-ls")
+	want := filepath.Join(home, ".pegg", "lsps", "terraform-ls")
 	if bin != want {
 		t.Fatalf("bin = %q, want %q", bin, want)
 	}
@@ -118,7 +118,7 @@ func TestInstallCommandStagesArchive(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "/usr/bin:/bin")
 
-	cacheDir := filepath.Join(home, ".vesvai", "lsps")
+	cacheDir := filepath.Join(home, ".pegg", "lsps")
 	staged := filepath.Join(cacheDir, "terraform-ls.zip")
 	cached := filepath.Join(cacheDir, "terraform-ls")
 
@@ -176,7 +176,7 @@ func TestResolveBinaryDownloadTarGzToCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(home, ".vesvai", "lsps", "tinymist")
+	want := filepath.Join(home, ".pegg", "lsps", "tinymist")
 	if bin != want {
 		t.Fatalf("bin = %q, want %q", bin, want)
 	}

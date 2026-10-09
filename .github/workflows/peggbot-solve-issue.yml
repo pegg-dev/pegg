@@ -1,0 +1,35 @@
+name: Peggbot Solve Issue
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  solve:
+    if: github.event.label.name == 'peggbot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run peggbot
+        uses: peggco/peggbot@v0.2
+        with:
+          mode: solve-issue
+          token: ${{ secrets.GITHUB_TOKEN }}
+          llm-provider: ${{ secrets.PEGGBOT_PROVIDER }}
+          llm-model: ${{ secrets.PEGGBOT_MODEL }}
+          llm-api-key: ${{ secrets.PEGGBOT_API_KEY }}
+          prompt-file: .github/prompts/solve-issue.md
+          issue-number: ${{ github.event.issue.number }}
+          branch-prefix: peggbot
+          base-branch: main
+          max-iterations: '80'
+          timeout-minutes: '40'

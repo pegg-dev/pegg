@@ -2,9 +2,10 @@ package acp
 
 import (
 	"context"
+
 	json "github.com/goccy/go-json"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 type InitializeParams struct {
@@ -129,8 +130,8 @@ func (s *Server) handleInitialize(ctx context.Context, params json.RawMessage) (
 		ProtocolVersion:   1,
 		AgentCapabilities: caps,
 		AgentInfo: &AgentInfo{
-			Name:    "vesvai",
-			Title:   "Vesvai AI Agent",
+			Name:    "pegg",
+			Title:   "Pegg AI Agent",
 			Version: config.AppVersion,
 		},
 		AuthMethods: []AuthMethod{},

@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vesvai/vesvai/internal/acp"
-	"github.com/vesvai/vesvai/internal/server"
+	"github.com/peggco/pegg/internal/acp"
+	"github.com/peggco/pegg/internal/server"
 )
 
 func (c *CLI) newServeCommand() *cobra.Command {
@@ -26,7 +26,7 @@ func (c *CLI) newServeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start a server (HTTP API, or ACP over stdio/HTTP)",
-		Long: `Start a Vesvai server.
+		Long: `Start a Pegg server.
 
 By default starts the HTTP REST API server on the configured port (default 8080).
 

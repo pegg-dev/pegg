@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/builtin/tools/subagent"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/skill"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/builtin/tools/subagent"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/skill"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 var (

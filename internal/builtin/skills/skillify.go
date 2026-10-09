@@ -1,7 +1,7 @@
 package skills
 
 import (
-	"github.com/vesvai/vesvai/internal/agent/prompt"
+	"github.com/peggco/pegg/internal/agent/prompt"
 )
 
 func SkillifySkill() *prompt.Prompt {
@@ -42,8 +42,8 @@ func SkillifySkill() *prompt.Prompt {
 			"If it is not clear, ask whether the skill should run inline (in the current conversation) or forked (as a subagent with its own context). Forked is better for self-contained tasks that do not need mid-process user input; inline is better when the user wants to steer mid-process.",
 			prompt.ListItem("Ask where the skill should be saved. Suggest a default based on context (repo-specific workflows -> repo, cross-repo personal workflows -> user):",
 				prompt.List(
-					"This repo — `<project>/.vesvai/skills/<name>/SKILL.md` — for workflows specific to this project.",
-					"Personal — `~/.vesvai/skills/<name>/SKILL.md` — follows you across all repos.",
+					"This repo — `<project>/.pegg/skills/<name>/SKILL.md` — for workflows specific to this project.",
+					"Personal — `~/.pegg/skills/<name>/SKILL.md` — follows you across all repos.",
 				)),
 		).
 		Heading(3, "Round 3: Break down each step").
@@ -85,7 +85,7 @@ func SkillifySkill() *prompt.Prompt {
 		List(
 			"allowed-tools: the minimum permissions needed, as space-separated tool names (e.g. `read write edit bash`).",
 			"context: only set `context: fork` for self-contained skills that do not need mid-process user input.",
-			"when_to_use is critical — it tells Vesvai when to auto-invoke. Start with \"Use when...\" and include trigger phrases.",
+			"when_to_use is critical — it tells Pegg when to auto-invoke. Start with \"Use when...\" and include trigger phrases.",
 			"arguments and argument-hint: only include if the skill takes parameters; reference them in the body with `$` placeholders (e.g. `$topic`).",
 		).
 		Heading(2, "Step 4: Confirm and save").
@@ -102,7 +102,7 @@ const skillifyTemplate = `---
 name: {{skill-name}}
 description: {{one-line description}}
 allowed-tools: {{space-separated tool names observed in the session, e.g. read write edit bash}}
-when_to_use: {{when Vesvai should automatically invoke this skill, including trigger phrases and example user messages}}
+when_to_use: {{when Pegg should automatically invoke this skill, including trigger phrases and example user messages}}
 argument-hint: "{{hint showing argument placeholders}}"
 arguments:
   - {{argument name}}

@@ -6,11 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/builtin/middlewares/compaction"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/builtin/middlewares/compaction"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 const chunksPerCommit = 10
@@ -37,6 +37,7 @@ type pendingMessage struct {
 	content   string
 	reasoning string
 	chunks    int
+	committed bool
 }
 
 func NewRecorder(mgr *Manager, log *logger.Logger) *Recorder {
@@ -320,9 +321,25 @@ func (r *Recorder) handleMessage(e agent.AgentMessage) {
 	}
 	r.mu.Lock()
 	streaming := r.pending[e.AgentID] != nil && r.pending[e.AgentID].chunks > 0
+	committed := r.pending[e.AgentID] != nil && r.pending[e.AgentID].committed
 	r.mu.Unlock()
 	if streaming {
 		r.commitPendingWithToolCalls(e.AgentID, id, e.Message.ToolCalls)
+		return
+	}
+	if committed {
+		r.mu.Lock()
+		if p := r.pending[e.AgentID]; p != nil {
+			p.committed = false
+		}
+		r.mu.Unlock()
+		if len(e.Message.ToolCalls) > 0 {
+			msg := llm.AssistantMessage("")
+			msg.ToolCalls = e.Message.ToolCalls
+			if _, err := r.mgr.AppendMessage(id, msg); err != nil {
+				r.log.Fdebug("session recorder: append tool calls: %v", err)
+			}
+		}
 		return
 	}
 	if _, err := r.mgr.AppendMessage(id, e.Message); err != nil {
@@ -362,6 +379,11 @@ func (r *Recorder) commitPendingWithToolCalls(agentID, sessID string, toolCalls 
 	if msg.Content == "" && msg.Reasoning == "" && len(msg.ToolCalls) == 0 {
 		return
 	}
+	r.mu.Lock()
+	if p := r.pending[agentID]; p != nil {
+		p.committed = true
+	}
+	r.mu.Unlock()
 	if _, err := r.mgr.AppendMessage(sessID, msg); err != nil {
 		r.log.Fdebug("session recorder: append tokens: %v", err)
 	}

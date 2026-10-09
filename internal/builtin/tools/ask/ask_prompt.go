@@ -1,6 +1,6 @@
 package ask
 
-import "github.com/vesvai/vesvai/internal/agent/prompt"
+import "github.com/peggco/pegg/internal/agent/prompt"
 
 func askToolPromptBuilder() *prompt.Prompt {
 	return prompt.New().

@@ -1,16 +1,16 @@
 package tools
 
 import (
-	"github.com/vesvai/vesvai/internal/builtin/tools/ask"
-	"github.com/vesvai/vesvai/internal/builtin/tools/file"
-	"github.com/vesvai/vesvai/internal/builtin/tools/loadskill"
-	"github.com/vesvai/vesvai/internal/builtin/tools/plan"
-	"github.com/vesvai/vesvai/internal/builtin/tools/shell"
-	"github.com/vesvai/vesvai/internal/builtin/tools/subagent"
-	"github.com/vesvai/vesvai/internal/builtin/tools/todo"
-	"github.com/vesvai/vesvai/internal/builtin/tools/web"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/builtin/tools/ask"
+	"github.com/peggco/pegg/internal/builtin/tools/file"
+	"github.com/peggco/pegg/internal/builtin/tools/loadskill"
+	"github.com/peggco/pegg/internal/builtin/tools/plan"
+	"github.com/peggco/pegg/internal/builtin/tools/shell"
+	"github.com/peggco/pegg/internal/builtin/tools/subagent"
+	"github.com/peggco/pegg/internal/builtin/tools/todo"
+	"github.com/peggco/pegg/internal/builtin/tools/web"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func Create(fs *vfs.VFS, sess *session.Manager) {

@@ -11,10 +11,10 @@ test:
 	go test -v ./...
 
 build:
-	go build -o bin/vesvai cmd/vesvai/main.go
+	go build -o bin/pegg cmd/pegg/main.go
 
 run:
-	./bin/vesvai
+	./bin/pegg
 
 clean:
 	rm -rf bin

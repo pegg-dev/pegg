@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type Middleware interface {

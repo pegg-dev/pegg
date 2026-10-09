@@ -11,7 +11,7 @@ import (
 	json "github.com/goccy/go-json"
 )
 
-const ModelsDataURL = "https://models.opencode.ai/api.json"
+const ModelsDataURL = "https://cdn.pegg.dev/models.json"
 
 const PricesCacheKey = "models_cache"
 

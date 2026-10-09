@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type discardHandler struct{}
@@ -192,6 +192,76 @@ func TestManagerRevertNoopAtTip(t *testing.T) {
 	snaps, _ := mgr.Snapshots(s.ID)
 	if len(snaps) != 0 {
 		t.Fatalf("snapshots = %+v", snaps)
+	}
+}
+
+func TestManagerForkBefore(t *testing.T) {
+	mgr, bus := newTestManager(t)
+	s, ids := newSessionWithMessages(t, mgr, "orig", 4)
+	var forked *SessionForked
+	_ = bus.Subscribe(TopicSessionForked, func(e SessionForked) { forked = &e })
+
+	fork, err := mgr.ForkBefore(s.ID, ids[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fork.ID == s.ID || fork.ParentID != s.ID || fork.Title != s.Title+" - fork" {
+		t.Fatalf("fork = %+v", fork)
+	}
+	msgs, _ := mgr.Messages(fork.ID)
+	if len(msgs) != 1 || msgs[0].Seq != 1 {
+		t.Fatalf("fork messages = %+v, want only the first message", msgs)
+	}
+	if msgs[0].ID == ids[0] {
+		t.Fatal("fork must use fresh message ids")
+	}
+	if forked == nil || forked.ParentID != s.ID || forked.ParentMessageID != ids[1] {
+		t.Fatalf("forked event = %+v", forked)
+	}
+
+	empty, err := mgr.ForkBefore(s.ID, ids[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msgs, _ := mgr.Messages(empty.ID); len(msgs) != 0 {
+		t.Fatalf("fork before first message should be empty, got %+v", msgs)
+	}
+
+	if _, err := mgr.ForkBefore(s.ID, "nope"); !errors.Is(err, ErrMessageNotFound) {
+		t.Fatalf("want ErrMessageNotFound, got %v", err)
+	}
+}
+
+func TestManagerRevertFrom(t *testing.T) {
+	mgr, bus := newTestManager(t)
+	s, ids := newSessionWithMessages(t, mgr, "orig", 4)
+	var reverted *SessionReverted
+	_ = bus.Subscribe(TopicSessionReverted, func(e SessionReverted) { reverted = &e })
+
+	snapID, removed, err := mgr.RevertFrom(s.ID, ids[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapID == "" || len(removed) != 3 || removed[0].Seq != 2 {
+		t.Fatalf("snapID = %q, removed = %+v", snapID, removed)
+	}
+	msgs, _ := mgr.Messages(s.ID)
+	if len(msgs) != 1 || msgs[0].ID != ids[0] {
+		t.Fatalf("messages after revert-from = %+v", msgs)
+	}
+	if reverted == nil || reverted.ToMessageID != ids[1] || reverted.SnapshotID != snapID {
+		t.Fatalf("reverted event = %+v", reverted)
+	}
+
+	if err := mgr.UndoRevert(s.ID, snapID); err != nil {
+		t.Fatal(err)
+	}
+	if msgs, _ := mgr.Messages(s.ID); len(msgs) != 4 {
+		t.Fatalf("messages after undo = %+v", msgs)
+	}
+
+	if _, _, err := mgr.RevertFrom(s.ID, "nope"); !errors.Is(err, ErrMessageNotFound) {
+		t.Fatalf("want ErrMessageNotFound, got %v", err)
 	}
 }
 

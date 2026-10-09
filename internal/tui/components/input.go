@@ -7,8 +7,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type inputSnapshot struct {
@@ -540,28 +540,19 @@ func (in *Input) visualLineWidth(line string) int {
 }
 
 func (in *Input) visualRowOf(row, col int) int {
-	vr := 0
-	w := in.innerW
-	if w < 1 {
-		w = 1
-	}
-	for i := 0; i < row && i < len(in.lines); i++ {
-		lineW := in.visualLineWidth(in.lines[i])
-		if lineW == 0 {
-			vr++
-		} else {
-			vr += (lineW + w - 1) / w
+	segs := in.wrapLines(in.innerW)
+	for i, s := range segs {
+		if s.lineIdx != row {
+			continue
+		}
+		if col >= s.start && col <= s.end {
+			if col == s.end && i+1 < len(segs) && segs[i+1].lineIdx == row {
+				return i + 1
+			}
+			return i
 		}
 	}
-	colW := 0
-	if row < len(in.lines) {
-		rs := []rune(in.lines[row])
-		for i := 0; i < col && i < len(rs); i++ {
-			colW += in.runeWidth(rs[i])
-		}
-	}
-	vr += colW / w
-	return vr
+	return 0
 }
 
 type wrapSegment struct {
@@ -580,24 +571,91 @@ func (in *Input) wrapLines(width int) []wrapSegment {
 			segs = append(segs, wrapSegment{lineIdx: li, start: 0, end: 0})
 			continue
 		}
-		pos := 0
-		visualWidth := 0
 		segStart := 0
-		for pos < len(rs) {
-			charW := in.runeWidth(rs[pos])
-			if visualWidth+charW > width && pos > segStart {
-				segs = append(segs, wrapSegment{lineIdx: li, start: segStart, end: pos})
-				segStart = pos
-				visualWidth = 0
+		for segStart < len(rs) {
+			w := 0
+			lastSpace := -1
+			i := segStart
+			for i < len(rs) {
+				charW := in.runeWidth(rs[i])
+				if w+charW > width {
+					break
+				}
+				w += charW
+				if rs[i] == ' ' {
+					lastSpace = i
+				}
+				i++
 			}
-			visualWidth += charW
-			pos++
-		}
-		if segStart < len(rs) || len(rs) == 0 {
-			segs = append(segs, wrapSegment{lineIdx: li, start: segStart, end: len(rs)})
+			if i >= len(rs) {
+				segs = append(segs, wrapSegment{lineIdx: li, start: segStart, end: len(rs)})
+				break
+			}
+			end := i
+			if lastSpace >= segStart {
+				end = lastSpace + 1
+			}
+			if end <= segStart {
+				end = segStart + 1
+				if end > len(rs) {
+					end = len(rs)
+				}
+			}
+			segs = append(segs, wrapSegment{lineIdx: li, start: segStart, end: end})
+			segStart = end
 		}
 	}
 	return segs
+}
+
+func (in *Input) visualOffset(s wrapSegment, col int) int {
+	rs := []rune(in.lines[s.lineIdx])
+	w := 0
+	for i := s.start; i < col && i < len(rs); i++ {
+		w += in.runeWidth(rs[i])
+	}
+	return w
+}
+
+func (in *Input) cursorVisualPos() ([]wrapSegment, int, int) {
+	segs := in.wrapLines(in.innerW)
+	for i, s := range segs {
+		if s.lineIdx != in.row {
+			continue
+		}
+		if in.col >= s.start && in.col < s.end {
+			return segs, i, in.visualOffset(s, in.col)
+		}
+		if in.col == s.end {
+			if i+1 < len(segs) && segs[i+1].lineIdx == in.row {
+				return segs, i + 1, 0
+			}
+			return segs, i, in.visualOffset(s, in.col)
+		}
+	}
+	return segs, 0, 0
+}
+
+func (in *Input) colAtVisualOffset(segs []wrapSegment, idx, offset int) (int, int) {
+	if idx < 0 {
+		idx = 0
+	}
+	if idx >= len(segs) {
+		idx = len(segs) - 1
+	}
+	s := segs[idx]
+	rs := []rune(in.lines[s.lineIdx])
+	col := s.start
+	w := 0
+	for col < s.end && col < len(rs) {
+		rw := in.runeWidth(rs[col])
+		if w+rw > offset {
+			break
+		}
+		w += rw
+		col++
+	}
+	return s.lineIdx, col
 }
 
 func (in *Input) visualRows(width int) int {
@@ -735,39 +793,11 @@ func (in *Input) moveUp(extend bool) {
 		in.beginExtend()
 	}
 	if in.innerW > 1 {
-		w := in.innerW
-		if in.row == 0 && in.col == 0 {
-			in.ensureCursorVisible()
-			in.settleExtend()
-			return
-		}
-		cursorCol := in.col
-		segStart := (cursorCol / w) * w
-		offset := cursorCol - segStart
-		if segStart > 0 {
-			in.col = segStart - w + offset
-			if in.col < 0 {
-				in.col = 0
-			}
+		segs, idx, offset := in.cursorVisualPos()
+		if idx > 0 {
+			in.row, in.col = in.colAtVisualOffset(segs, idx-1, offset)
 		} else {
-			if in.row == 0 {
-				in.col = 0
-			} else {
-				in.row--
-				prevLen := len([]rune(in.lines[in.row]))
-				if prevLen == 0 {
-					in.col = 0
-				} else {
-					prevSegs := (prevLen + w - 1) / w
-					in.col = (prevSegs-1)*w + offset
-					if in.col > prevLen {
-						in.col = prevLen
-					}
-					if in.col > cursorCol {
-						in.col = cursorCol
-					}
-				}
-			}
+			in.row, in.col = 0, 0
 		}
 	} else {
 		if in.row == 0 {
@@ -793,34 +823,13 @@ func (in *Input) moveDown(extend bool) {
 		in.beginExtend()
 	}
 	if in.innerW > 1 {
-		w := in.innerW
-		lineLen := len([]rune(in.lines[in.row]))
-		cursorCol := in.col
-		segStart := (cursorCol / w) * w
-		segEnd := segStart + w
-		if segEnd > lineLen {
-			segEnd = lineLen
-		}
-		if segEnd < lineLen {
-			in.col = cursorCol + w
-			if in.col > lineLen {
-				in.col = lineLen
-			}
-		} else {
-			if in.row == len(in.lines)-1 {
-				in.col = lineLen
-			} else {
-				in.row++
-				nextLen := len([]rune(in.lines[in.row]))
-				if nextLen == 0 {
-					in.col = 0
-				} else {
-					in.col = cursorCol
-					if in.col > nextLen {
-						in.col = nextLen
-					}
-				}
-			}
+		segs, idx, offset := in.cursorVisualPos()
+		if idx+1 < len(segs) {
+			in.row, in.col = in.colAtVisualOffset(segs, idx+1, offset)
+		} else if len(segs) > 0 {
+			last := segs[len(segs)-1]
+			in.row = last.lineIdx
+			in.col = lineWidth(in.lines[in.row])
 		}
 	} else {
 		if in.row == len(in.lines)-1 {
@@ -1061,16 +1070,17 @@ func (in *Input) Clear() {
 	in.longTexts = make(map[rune]string)
 }
 
-func (in *Input) SetText(text string) {
-	in.saveUndo()
-	in.lines = strings.Split(text, "\n")
-	if len(in.lines) == 0 {
-		in.lines = []string{""}
+func (in *Input) SetValue(text string) {
+	in.Clear()
+	if text == "" {
+		in.lastActivity = time.Now()
+		in.ensureCursorVisible()
+		return
 	}
-	in.anchor = nil
+	in.lines = strings.Split(text, "\n")
 	in.row = len(in.lines) - 1
 	in.col = len([]rune(in.lines[in.row]))
-	in.hscroll = 0
+	in.lastActivity = time.Now()
 	in.ensureCursorVisible()
 }
 
@@ -1122,7 +1132,7 @@ func (in *Input) HistoryPrev() bool {
 		in.histDraft = in.Value()
 	}
 	in.histIdx--
-	in.SetText(in.history[in.histIdx])
+	in.SetValue(in.history[in.histIdx])
 	return true
 }
 
@@ -1134,10 +1144,10 @@ func (in *Input) HistoryNext() bool {
 	if in.histIdx == len(in.history) {
 		draft := in.histDraft
 		in.histDraft = ""
-		in.SetText(draft)
+		in.SetValue(draft)
 		return true
 	}
-	in.SetText(in.history[in.histIdx])
+	in.SetValue(in.history[in.histIdx])
 	return true
 }
 

@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 type agentCtxKey struct{}

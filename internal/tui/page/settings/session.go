@@ -8,12 +8,12 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
+	"github.com/peggco/pegg/internal/utils/query"
 )
 
 func newSessionTab(s *Settings) *sessionTab { return &sessionTab{settings: s} }
@@ -127,6 +127,40 @@ func (t *sessionTab) HandleKey(ev *tcell.EventKey) bool {
 		}
 	}
 	return false
+}
+
+func (t *sessionTab) HandleMouse(x, y int, bounds layout.Region, buttons tcell.ButtonMask) bool {
+	t.loadCompaction()
+	row := y - bounds.Top
+	if row < 0 || row >= t.totalRows() {
+		return false
+	}
+	if row < sessionRowCount || row >= compSectionStart {
+		t.index = row
+	}
+	if buttons&tcell.ButtonPrimary == 0 {
+		return true
+	}
+	if row < sessionRowCount {
+		if !t.rowEnabled(row) {
+			return true
+		}
+		switch row {
+		case 0:
+			t.settings.openSessionList()
+		case 1:
+			t.settings.newSession()
+		case 2:
+			t.settings.openDeleteConfirm()
+		case 3:
+			t.settings.openTitle()
+		}
+		return true
+	}
+	if row >= compSectionStart {
+		t.toggleCompRow()
+	}
+	return true
 }
 
 func (t *sessionTab) adjustComp(right bool) {

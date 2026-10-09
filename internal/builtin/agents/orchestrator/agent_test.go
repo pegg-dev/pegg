@@ -4,10 +4,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent/tools"
-	"github.com/vesvai/vesvai/internal/builtin/tools/subagent"
-	"github.com/vesvai/vesvai/internal/builtin/tools/todo"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/agent/tools"
+	"github.com/peggco/pegg/internal/builtin/tools/subagent"
+	"github.com/peggco/pegg/internal/builtin/tools/todo"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 func newTestFS(t *testing.T) *vfs.VFS {

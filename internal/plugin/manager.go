@@ -11,16 +11,16 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
-	"github.com/vesvai/vesvai/internal/core/cache"
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/core/logger"
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/lsp"
-	"github.com/vesvai/vesvai/internal/mcp"
-	"github.com/vesvai/vesvai/internal/plugin/shared"
-	"github.com/vesvai/vesvai/internal/session"
-	"github.com/vesvai/vesvai/internal/vfs"
+	"github.com/peggco/pegg/internal/core/cache"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/core/logger"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/lsp"
+	"github.com/peggco/pegg/internal/mcp"
+	"github.com/peggco/pegg/internal/plugin/shared"
+	"github.com/peggco/pegg/internal/session"
+	"github.com/peggco/pegg/internal/vfs"
 )
 
 type Manager struct {
@@ -140,7 +140,7 @@ func (m *Manager) loadPlugin(path string) error {
 		return fmt.Errorf("connect to plugin: %w", err)
 	}
 
-	raw, err := rpcClient.Dispense("vesvai")
+	raw, err := rpcClient.Dispense("pegg")
 	if err != nil {
 		client.Kill()
 		return fmt.Errorf("dispense plugin: %w", err)
@@ -218,7 +218,7 @@ func GetPluginDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("get home dir: %w", err)
 	}
-	return filepath.Join(home, ".vesvai", "plugins"), nil
+	return filepath.Join(home, ".pegg", "plugins"), nil
 }
 
 func pluginCmd(path string) *exec.Cmd {

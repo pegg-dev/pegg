@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	openaidriver "github.com/vesvai/vesvai/internal/llm/drivers/openai"
-	"github.com/vesvai/vesvai/internal/llm/providers/groq"
-	"github.com/vesvai/vesvai/internal/llm/providers/openai"
-	"github.com/vesvai/vesvai/internal/llm/providers/openrouter"
+	"github.com/peggco/pegg/internal/core/config"
+	openaidriver "github.com/peggco/pegg/internal/llm/drivers/openai"
+	"github.com/peggco/pegg/internal/llm/providers/groq"
+	"github.com/peggco/pegg/internal/llm/providers/openai"
+	"github.com/peggco/pegg/internal/llm/providers/openrouter"
 )
 
 func TestOpenAIProviderFactory(t *testing.T) {

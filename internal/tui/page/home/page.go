@@ -7,17 +7,16 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/tui/components"
-	"github.com/vesvai/vesvai/internal/tui/layout"
-	"github.com/vesvai/vesvai/internal/tui/styles"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/tui/components"
+	"github.com/peggco/pegg/internal/tui/layout"
+	"github.com/peggco/pegg/internal/tui/styles"
 )
 
 type focusTarget int
 
 const (
 	focusInput focusTarget = iota
-	focusChat
 	focusAttachments
 )
 
@@ -77,7 +76,7 @@ var defaultHints = []string{
 	"use '@' to mention files, folders, or agents",
 	"use '/' to run a skill",
 	"use '/init' to create an AGENTS.md for this project",
-	"use '/rule' to save a rule Vesvai always follows",
+	"use '/rule' to save a rule Pegg always follows",
 	"use '/skillify' to turn this session into a reusable skill",
 	"use '/review' to review a pull request",
 	"use '/batch' to change many files at once",
@@ -150,16 +149,6 @@ func (p *Page) SetReasoningEffort(e string) { p.status.SetReasoningEffort(e) }
 func (p *Page) SetUsage(u llm.Usage)        { p.status.SetUsage(u) }
 func (p *Page) SetMaxInputTokens(n int)     { p.status.SetMaxInputTokens(n) }
 
-func (p *Page) SetChatFocus(b bool) {
-	if b {
-		p.focus = focusChat
-	} else {
-		p.focus = focusInput
-	}
-}
-
-func (p *Page) ChatFocused() bool { return p.focus == focusChat }
-
 func (p *Page) HandleScroll(delta int) bool {
 	if !p.chat.HasItems() {
 		return false
@@ -176,8 +165,19 @@ func (p *Page) HandleClick(x, y, w, h int) bool {
 	if x < chatRegion.Left || x >= chatRegion.Right() || y < chatRegion.Top || y >= chatRegion.Bottom() {
 		return false
 	}
-	p.focus = focusChat
 	return p.chat.HandleClick(x, y, chatRegion.Top)
+}
+
+func (p *Page) HandleMouse(x, y, w, h int, buttons tcell.ButtonMask) bool {
+	if !p.chat.HasItems() {
+		return false
+	}
+	chatRegion := p.chatBounds(layout.Region{Left: 0, Top: 0, Width: w, Height: h})
+	inside := x >= chatRegion.Left && x < chatRegion.Right() && y >= chatRegion.Top && y < chatRegion.Bottom()
+	if !inside && buttons&tcell.ButtonPrimary != 0 {
+		return false
+	}
+	return p.chat.HandleMouse(x, y, chatRegion.Top, chatRegion.Left, buttons)
 }
 
 func (p *Page) chatBounds(bounds layout.Region) layout.Region {
@@ -209,42 +209,54 @@ func (p *Page) chatBounds(bounds layout.Region) layout.Region {
 	}
 }
 
+func (p *Page) DrawErrorBanner(s tcell.Screen, bounds layout.Region, msg string, style tcell.Style) {
+	if msg == "" {
+		return
+	}
+	region := p.chatBounds(bounds)
+	if region.Width < 1 || region.Height < 1 {
+		return
+	}
+	lines := components.WrapText(msg, style, region.Width)
+	if len(lines) == 0 {
+		return
+	}
+	if len(lines) > region.Height {
+		lines = lines[:region.Height]
+	}
+	y := region.Bottom() - len(lines)
+	for i, ln := range lines {
+		components.DrawLine(s, region.Left, y+i, ln)
+	}
+}
+
 func (p *Page) HandleKey(ev *tcell.EventKey) bool {
 	if p.askPicker.Active() {
 		return p.askPicker.HandleKey(ev)
 	}
 	if ev.Key() == tcell.KeyTab {
-		if p.chat.HasItems() || p.attachmentBar.Count() > 0 {
+		if p.attachmentBar.Count() > 0 {
 			switch p.focus {
 			case focusInput:
-				if p.attachmentBar.Count() > 0 {
-					p.focus = focusAttachments
-					p.attachmentBar.Focus()
-					p.input.Blur()
-				} else {
-					p.focus = focusChat
-				}
+				p.focus = focusAttachments
+				p.attachmentBar.Focus()
+				p.input.Blur()
 			case focusAttachments:
-				p.focus = focusChat
-				p.attachmentBar.Blur()
-			case focusChat:
 				p.focus = focusInput
+				p.attachmentBar.Blur()
 				p.input.Focus()
 			}
 			return true
+		}
+		if p.focus == focusAttachments {
+			p.attachmentBar.Blur()
+			p.focus = focusInput
+			p.input.Focus()
 		}
 		return p.input.HandleKey(ev)
 	}
 	if ev.Key() == tcell.KeyEsc {
 		if p.chat.HasBack() && p.chat.HandleKey(ev) {
-			return true
-		}
-		if p.focus == focusChat {
-			if p.chat.HandleKey(ev) {
-				return true
-			}
-			p.focus = focusInput
-			p.input.Focus()
 			return true
 		}
 		if p.focus == focusAttachments {
@@ -262,9 +274,6 @@ func (p *Page) HandleKey(ev *tcell.EventKey) bool {
 			p.input.Focus()
 		}
 		return handled
-	}
-	if p.focus == focusChat {
-		return p.chat.HandleKey(ev)
 	}
 
 	atTokAt, _, atActive := p.input.AtToken()
@@ -457,7 +466,7 @@ func (p *Page) Draw(s tcell.Screen, bounds layout.Region, focused bool) {
 			Width:  topArea.Width - 2,
 			Height: topArea.Height - 2,
 		}
-		p.chat.Draw(s, chatRegion, focused && p.focus == focusChat)
+		p.chat.Draw(s, chatRegion, false)
 	} else {
 		logoRegion := layout.CenterIn(topArea, p.logo.Width, p.logo.Height)
 		p.logo.Draw(s, logoRegion, false)

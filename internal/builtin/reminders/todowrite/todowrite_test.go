@@ -3,9 +3,9 @@ package todowrite
 import (
 	"testing"
 
-	"github.com/vesvai/vesvai/internal/agent"
-	"github.com/vesvai/vesvai/internal/core/event"
-	"github.com/vesvai/vesvai/internal/llm"
+	"github.com/peggco/pegg/internal/agent"
+	"github.com/peggco/pegg/internal/core/event"
+	"github.com/peggco/pegg/internal/llm"
 )
 
 func startAgent(t *testing.T, bus event.Bus, name string) *agent.Agent {

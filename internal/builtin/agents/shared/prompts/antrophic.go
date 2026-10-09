@@ -1,6 +1,6 @@
 package prompts
 
-import "github.com/vesvai/vesvai/internal/agent/prompt"
+import "github.com/peggco/pegg/internal/agent/prompt"
 
 func AntrophicPromptBuilder() *prompt.Prompt {
 	return prompt.New().
@@ -9,8 +9,8 @@ func AntrophicPromptBuilder() *prompt.Prompt {
 		Paragraph("IMPORTANT: You must NEVER generate or guess URLs for the user unless you are confident that the URLs are for helping the user with programming. You may use URLs provided by the user in their messages or local files.").
 		Paragraph("If the user asks for help or wants to give feedback inform them of the following:").
 		List("ctrl+p to list available actions",
-			"To give feedback, users should report the issue at https://github.com/vesvai/vesvai").
-		Paragraph("When the user directly asks about {{name}} (eg. \"can {{name}} do...\", \"does {{name}} have...\"), or asks in second person (eg. \"are you able...\", \"can you do...\"), or asks how to use a specific {{name}} feature (eg. implement a hook, write a slash command, or install an MCP server), use the WebFetch tool to gather information to answer the question from {{name}} docs. The list of available docs is available at https://docs.vesv.ai").
+			"To give feedback, users should report the issue at https://github.com/peggco/pegg").
+		Paragraph("When the user directly asks about {{name}} (eg. \"can {{name}} do...\", \"does {{name}} have...\"), or asks in second person (eg. \"are you able...\", \"can you do...\"), or asks how to use a specific {{name}} feature (eg. implement a hook, write a slash command, or install an MCP server), use the WebFetch tool to gather information to answer the question from {{name}} docs. The list of available docs is available at https://docs.pegg.dev").
 		Heading(1, "Tone and style").
 		List("Only use emojis if the user explicitly requests it. Avoid using emojis in all communication unless asked.",
 			"Your output will be displayed on a command line interface. Your responses should be short and concise. You can use GitHub-flavored markdown for formatting, and will be rendered in a monospace font using the CommonMark specification.",

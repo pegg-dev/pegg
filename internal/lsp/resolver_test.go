@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
+	"github.com/peggco/pegg/internal/core/config"
 )
 
 type blobServer struct {
@@ -141,7 +141,7 @@ func TestResolveBinaryDownloadAndCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := filepath.Join(home, ".vesvai", "lsps", "gopls-fake")
+	expected := filepath.Join(home, ".pegg", "lsps", "gopls-fake")
 	if binary != expected {
 		t.Fatalf("binary = %q, want %q", binary, expected)
 	}
@@ -201,7 +201,7 @@ func TestResolveBinaryInstallFallback(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cached := filepath.Join(home, ".vesvai", "lsps", "gopls-cmd")
+	cached := filepath.Join(home, ".pegg", "lsps", "gopls-cmd")
 	if resolved != cached {
 		t.Fatalf("resolved = %q, want %q", resolved, cached)
 	}
@@ -273,7 +273,7 @@ func TestResolveBinaryInstallShellSnippet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cached := filepath.Join(home, ".vesvai", "lsps", "astro-ls")
+	cached := filepath.Join(home, ".pegg", "lsps", "astro-ls")
 	if resolved != cached {
 		t.Fatalf("resolved = %q, want %q", resolved, cached)
 	}
@@ -315,7 +315,7 @@ func TestResolveBinaryFallsBackToDefaultInstall(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(home, ".vesvai", "lsps", "gopls")
+	want := filepath.Join(home, ".pegg", "lsps", "gopls")
 	if resolved != want {
 		t.Fatalf("resolved = %q, want %q", resolved, want)
 	}

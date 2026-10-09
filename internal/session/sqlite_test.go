@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/llm"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/llm"
+	"github.com/peggco/pegg/internal/utils/query"
 	_ "modernc.org/sqlite"
 )
 
@@ -97,6 +97,34 @@ func TestSQLiteStoreMessagesTruncate(t *testing.T) {
 	}
 
 	if _, err := s.TruncateAfter("s1", "nope"); !errors.Is(err, ErrMessageNotFound) {
+		t.Fatalf("want ErrMessageNotFound, got %v", err)
+	}
+}
+
+func TestSQLiteStoreMessagesTruncateFrom(t *testing.T) {
+	s := newTestSQLiteStore(t)
+	if err := s.Create(testSession("s1")); err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i <= 4; i++ {
+		if err := s.InsertMessage(testMessage("s1", i, llm.RoleUser, "hi")); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	removed, err := s.TruncateFrom("s1", "s1-m2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(removed) != 3 || removed[0].Seq != 2 {
+		t.Fatalf("removed = %+v", removed)
+	}
+	msgs, _ := s.Messages("s1")
+	if len(msgs) != 1 || msgs[0].Seq != 1 {
+		t.Fatalf("messages after truncate-from = %+v", msgs)
+	}
+
+	if _, err := s.TruncateFrom("s1", "nope"); !errors.Is(err, ErrMessageNotFound) {
 		t.Fatalf("want ErrMessageNotFound, got %v", err)
 	}
 }

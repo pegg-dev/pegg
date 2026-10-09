@@ -4,7 +4,7 @@ icon: lucide/rocket
 
 # Get Started
 
-The Vesvai Go SDK (`pkg/sdk`) embeds the full agent engine in your own program. Use
+The Pegg Go SDK (`pkg/sdk`) embeds the full agent engine in your own program. Use
 it to run agentic chats, raw completions, persistent sessions, sandboxed file
 operations, and custom tools without a separate server process.
 
@@ -13,11 +13,11 @@ operations, and custom tools without a separate server process.
 The SDK is part of the main module:
 
 ```bash
-go get github.com/vesvai/vesvai
+go get github.com/peggco/pegg
 ```
 
 ```go
-import "github.com/vesvai/vesvai/pkg/sdk"
+import "github.com/peggco/pegg/pkg/sdk"
 ```
 
 ## Minimal example
@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vesvai/vesvai/pkg/sdk"
+	"github.com/peggco/pegg/pkg/sdk"
 )
 
 func main() {
@@ -85,7 +85,7 @@ Returning an error from the handler aborts the run.
 | Field | Description |
 |---|---|
 | `Config` | A programmatically built `*Config`. Defaults to the config on disk |
-| `ConfigDir` | Directory containing a `vesvai.json` to load instead |
+| `ConfigDir` | Directory containing a `pegg.json` to load instead |
 | `APIKeys` | Map of provider/driver name → API key, merged into the config |
 | `Providers` | Additional `LLMConfig` entries appended to the config |
 | `Workspace` | Root of the sandboxed filesystem. Defaults to the current directory |

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vesvai/vesvai/internal/core/config"
-	"github.com/vesvai/vesvai/internal/utils/query"
+	"github.com/peggco/pegg/internal/core/config"
+	"github.com/peggco/pegg/internal/utils/query"
 	_ "modernc.org/sqlite"
 )
 
