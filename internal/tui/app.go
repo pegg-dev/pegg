@@ -60,6 +60,7 @@ type App struct {
 	running         bool
 	usage           llm.Usage
 	history         []llm.Message
+	promptHistory   []string
 	session         *activeSession
 	loadedFloor     int
 	reasoningEffort string
@@ -229,6 +230,8 @@ func (a *App) build() {
 	a.home = page
 	a.chat = page.Chat()
 	page.Input().OnSubmit = a.submitMessage
+	a.promptHistory = loadPromptHistory()
+	page.Input().SetHistory(a.promptHistory)
 	page.Input().Focus()
 	page.SetModel(a.modelDisplay())
 	page.AttachmentBar().OnChange = func() {
@@ -728,6 +731,24 @@ func (a *App) loadSessionIntoChatLocked() {
 	}
 	a.refreshHomeLocked()
 	a.seedHistoryFromSessionLocked()
+	a.seedInputHistoryLocked()
+}
+
+func (a *App) seedInputHistoryLocked() {
+	if a.home == nil || a.session == nil {
+		return
+	}
+	var prompts []string
+	for _, m := range a.session.info.Messages {
+		if m.Role != llm.RoleUser {
+			continue
+		}
+		if text := messageText(m); strings.TrimSpace(text) != "" {
+			prompts = append(prompts, text)
+		}
+	}
+	a.promptHistory = mergePromptHistory(a.promptHistory, prompts)
+	a.home.Input().SetHistory(a.promptHistory)
 }
 
 func (a *App) seedHistoryFromSessionLocked() {

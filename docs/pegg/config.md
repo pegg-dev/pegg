@@ -12,7 +12,7 @@ files. There is no YAML or TOML variant.
 | Scope | Path | Purpose |
 |---|---|---|
 | Global | `~/.peggco/pegg.json` | Providers, server, permission, theme, storage drivers, MCP and LSP servers |
-| Project | `<project>/.pegg/` | Project data: `todos/`, `subagents/`, `plans/`, `rules/` |
+| Project | `<project>/.pegg/` | Project data: `todos/`, `subagents/`, `plans/`, `rules/`, `prompt-history.json` |
 | Project | `<project>/.mcp.json` | Project MCP servers |
 | Project | `<project>/.lsp.json` | Project language servers |
 | Global | `~/.pegg/permissions.json` | Remembered tool approvals and rejections |

@@ -285,6 +285,7 @@ func TestAppQuitsOnCtrlQ(t *testing.T) {
 }
 
 func TestAppSubmitPublishesEvent(t *testing.T) {
+	t.Chdir(t.TempDir())
 	s := newTestScreen(t)
 	bus := event.New()
 	setBus(bus)
