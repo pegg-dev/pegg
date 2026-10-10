@@ -11,7 +11,25 @@ type permitCtxKey struct{}
 
 type permitState struct {
 	unrestricted bool
+	autoApprove  bool
 	paths        map[string]struct{}
+}
+
+type autoApproveCtxKey struct{}
+
+func WithAutoApprove(ctx context.Context) context.Context {
+	if ctx == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, autoApproveCtxKey{}, true)
+}
+
+func AutoApprove(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	v, _ := ctx.Value(autoApproveCtxKey{}).(bool)
+	return v
 }
 
 func WithUnrestricted(ctx context.Context) context.Context {

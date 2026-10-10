@@ -271,3 +271,5 @@ Message object:
 - There is no WebSocket endpoint on the HTTP API. Use ACP if you need one.
 - Start a session from the CLI/TUI or by passing `session_id`; the API does not have
   a "create session" endpoint.
+- The background [scheduler](../features/scheduling.md) runs while the server is up,
+  so due schedules fire even when no request is in flight.

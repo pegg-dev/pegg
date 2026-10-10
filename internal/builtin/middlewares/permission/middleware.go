@@ -120,6 +120,10 @@ func (m *Middleware) InvokeTool(ctx context.Context, call llm.ToolCall, next age
 	name := call.Function.Name
 	mode := m.modeFor(name)
 
+	if AutoApprove(ctx) && (mode == ModeAsk || mode == ModeSemiAsk) {
+		return next(WithUnrestricted(ctx), call)
+	}
+
 	switch mode {
 	case ModeAllow:
 		return next(WithUnrestricted(ctx), call)

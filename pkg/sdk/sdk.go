@@ -18,6 +18,7 @@ import (
 	"github.com/peggco/pegg/internal/llm"
 	"github.com/peggco/pegg/internal/memory"
 	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/schedule"
 	"github.com/peggco/pegg/internal/session"
 	"github.com/peggco/pegg/internal/vfs"
 
@@ -27,17 +28,18 @@ import (
 )
 
 type Options struct {
-	Config          *Config
-	ConfigDir       string
-	APIKeys         map[string]string
-	Providers       []LLMConfig
-	Workspace       string
-	SessionDB       string
-	SessionDir      string
-	Cache           cache.Cache
-	Logger          *Logger
-	DisableBuiltins bool
-	DisableRecorder bool
+	Config           *Config
+	ConfigDir        string
+	APIKeys          map[string]string
+	Providers        []LLMConfig
+	Workspace        string
+	SessionDB        string
+	SessionDir       string
+	Cache            cache.Cache
+	Logger           *Logger
+	DisableBuiltins  bool
+	DisableRecorder  bool
+	DisableScheduler bool
 }
 
 type Engine struct {
@@ -51,6 +53,7 @@ type Engine struct {
 	router    *router.Router
 	sessions  *session.Manager
 	rec       *session.Recorder
+	sched     *schedule.Manager
 	fs        *VFS
 	store     cache.Cache
 	mu        sync.Mutex
@@ -153,10 +156,30 @@ func (e *Engine) init() error {
 	}
 	e.fs = fs
 
+	sched, err := schedule.New(schedule.Deps{
+		Config:           cfg,
+		Bus:              e.bus,
+		Log:              e.log,
+		Sessions:         e.sessions,
+		LLM:              e.llm,
+		Executor:         engineExecutor{engine: e},
+		DefaultWorkspace: e.workspaceRoot(),
+	})
+	if err != nil {
+		return fmt.Errorf("sdk: init scheduler: %w", err)
+	}
+	e.sched = sched
+
 	if !e.opts.DisableBuiltins {
 		builtinsOnce.Do(func() {
-			_ = builtin.Create(fs, e.sessions, builtin.Options{LLM: e.llm, Decision: e.decisions, Config: cfg, Bus: e.bus, Memory: e.memory})
+			_ = builtin.Create(fs, e.sessions, builtin.Options{LLM: e.llm, Decision: e.decisions, Config: cfg, Bus: e.bus, Memory: e.memory, Scheduler: sched})
 		})
+	}
+
+	if !e.opts.DisableScheduler && sched.Enabled() {
+		if err := sched.Start(context.Background()); err != nil {
+			return fmt.Errorf("sdk: start scheduler: %w", err)
+		}
 	}
 
 	_ = e.store.Set(llm.PricesCacheKey, []byte("{}"))
@@ -172,6 +195,9 @@ func (e *Engine) cleanup() {
 	}
 	if e.rec != nil {
 		_ = e.rec.Stop(e.bus)
+	}
+	if e.sched != nil {
+		e.sched.Stop()
 	}
 	if e.memory != nil {
 		e.memory.Stop()
@@ -219,6 +245,10 @@ func (e *Engine) Workspace() *VFS {
 
 func (e *Engine) Bus() event.Bus {
 	return e.bus
+}
+
+func (e *Engine) Scheduler() *schedule.Manager {
+	return e.sched
 }
 
 func (e *Engine) loadConfig() (*Config, error) {

@@ -16,6 +16,7 @@ files. There is no YAML or TOML variant.
 | Project | `<project>/.mcp.json` | Project MCP servers |
 | Project | `<project>/.lsp.json` | Project language servers |
 | Global | `~/.pegg/permissions.json` | Remembered tool approvals and rejections |
+| Global | `~/.pegg/schedules.json` | Recurring schedules. Run history lives in `~/.pegg/schedule_runs/` |
 
 The global file is created with defaults on first run. A missing file is not an
 error — Pegg falls back to built-in defaults. An unparsable file is an error.
@@ -207,6 +208,18 @@ the full guide.
 | `consolidate` | bool | `true` | Run the librarian to keep the curated memory files up to date |
 | `skip_tools` | string[] | — | Additional tools whose results are never captured |
 
+### `scheduler`
+
+Recurring background schedules. A lightweight scheduler starts with every
+long-running process (TUI, `serve`, `connect`) and runs each schedule as a separate
+child process, saving every run as a session. See [Scheduling](features/scheduling.md).
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `true` | Start the background scheduler with the app |
+| `store_dir` | string | `~/.pegg` | Directory holding `schedules.json` and `schedule_runs/` |
+| `history_limit` | int | `50` | Maximum run records kept per schedule |
+
 ### `mcp_servers`
 
 Map of server name to [MCP server config](configurations/mcp.md).
@@ -316,6 +329,10 @@ Map of server name to [language server config](configurations/lsp.md).
     "context_budget": 8000,
     "max_results": 5,
     "consolidate": true
+  },
+  "scheduler": {
+    "enabled": true,
+    "history_limit": 50
   },
   "mcp_servers": {
     "db": {

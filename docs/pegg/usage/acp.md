@@ -33,6 +33,11 @@ orchestrator used by the CLI and TUI.
 Host and port come from `--host` / `--port` or the `server` config block. The ACP
 handler does not apply the HTTP API's auth or CORS middleware.
 
+!!! note
+
+    The background [scheduler](../features/scheduling.md) runs while the ACP server is
+    up, so due schedules fire independently of the connected editor session.
+
 ## Protocol basics
 
 - Every message is a JSON-RPC 2.0 envelope. `"jsonrpc"` must be exactly `"2.0"`.

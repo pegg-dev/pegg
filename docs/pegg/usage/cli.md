@@ -258,6 +258,38 @@ pegg sessions show 3f2b1c8e-...
 
 See [Sessions](../features/sessions.md).
 
+## `pegg schedule`
+
+Create and manage recurring background schedules. A lightweight scheduler runs
+whenever a long-running Pegg process is active (TUI, `serve`, `connect`), and each
+run is saved as a session titled `schedule HH.MM.SS`. See
+[Scheduling](../features/scheduling.md) for the full guide.
+
+```bash
+pegg schedule create "PR review" --cron "0 9 * * 1-5" --prompt "Review the open PRs"
+pegg schedule list
+pegg schedule trigger <id>
+```
+
+| Command | Description |
+|---|---|
+| `pegg schedule` / `list [--tags a,b]` | List schedules |
+| `pegg schedule create [name]` | Create a schedule (prompts for missing values) |
+| `pegg schedule get <id>` | Show one schedule |
+| `pegg schedule upcoming` | Preview the next 10 runs |
+| `pegg schedule active` | Show currently running executions |
+| `pegg schedule trigger <id>` | Run immediately |
+| `pegg schedule pause <id>` / `resume <id>` | Disable / re-enable |
+| `pegg schedule update <id> [flags]` | Change any field |
+| `pegg schedule history <id>` | Past runs |
+| `pegg schedule stats <id>` | Success rate and timing |
+| `pegg schedule delete <id>` | Remove a schedule |
+
+`create` flags: `--name`, `--cron`, `--prompt`, `--workspace`, `--provider`,
+`--model`, `--tags`, `--timeout`, `--max-parallel`, `--disabled`. When `--cron` is
+omitted interactively, Pegg offers a menu of common expressions plus a custom
+option.
+
 ## `pegg logs`
 
 View application logs.

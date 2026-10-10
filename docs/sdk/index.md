@@ -95,6 +95,7 @@ Returning an error from the handler aborts the run.
 | `Logger` | Custom `*Logger`. Defaults to a warn-level logger |
 | `DisableBuiltins` | Skip registering built-in tools, agents, and middlewares |
 | `DisableRecorder` | Skip automatic session recording |
+| `DisableScheduler` | Skip the background scheduler. Scheduled tasks otherwise run in-process through `Chat` |
 
 The `Open` call loads config, starts the LLM manager, mounts the VFS, registers
 built-ins (once per process), and publishes the `app.mounted` event. **Only one
@@ -106,6 +107,7 @@ engine may be open per process** — a second `Open` returns `sdk.ErrAlreadyOpen
 |---|---|
 | Chat & completions | [Chat](chat.md) |
 | Sessions | [Sessions](sessions.md) |
+| Scheduling | [Scheduling](../pegg/features/scheduling.md#sdk) |
 | File operations | [Files](files.md) |
 | Custom tools, middlewares, agents, providers, skills | [Extending](extending.md) |
 | Events and error handling | [Events & Errors](events-errors.md) |

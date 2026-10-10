@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/peggco/pegg/internal/notification"
 	"github.com/peggco/pegg/internal/plugin"
 	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/schedule"
 	"github.com/peggco/pegg/internal/session"
 	"github.com/peggco/pegg/internal/skill"
 	"github.com/peggco/pegg/internal/utils/query"
@@ -42,6 +44,10 @@ func Run(args []string) error {
 
 	if err := config.EnsureProjectConfigDir(); err != nil {
 		return fmt.Errorf("bootstrap: create project config dir: %w", err)
+	}
+
+	if os.Getenv("PEGG_SCHEDULE_RUN") == "1" && cfg.Permission != nil {
+		schedule.ApplyScheduledPermissions(cfg.Permission)
 	}
 
 	log, err := logger.LoggerModule(cfg.Logger)
@@ -113,6 +119,17 @@ func Run(args []string) error {
 	}
 	defer rec.Stop(bus)
 
+	sched, err := schedule.New(schedule.Deps{
+		Config:   cfg,
+		Bus:      bus,
+		Log:      log,
+		Sessions: sess,
+		LLM:      mgr,
+	})
+	if err != nil {
+		return fmt.Errorf("bootstrap: init scheduler: %w", err)
+	}
+
 	fs, err := vfs.VFSModule(log)
 	if err != nil {
 		return fmt.Errorf("bootstrap: init vfs: %w", err)
@@ -120,10 +137,17 @@ func Run(args []string) error {
 	if err := skill.SkillModule(); err != nil {
 		return fmt.Errorf("bootstrap: init skills: %w", err)
 	}
-	if err := builtin.Create(fs, sess, builtin.Options{LLM: mgr, Decision: decMgr, Config: cfg, Bus: bus, Memory: memMgr}); err != nil {
+	if err := builtin.Create(fs, sess, builtin.Options{LLM: mgr, Decision: decMgr, Config: cfg, Bus: bus, Memory: memMgr, Scheduler: sched}); err != nil {
 		return fmt.Errorf("bootstrap: builtin: %w", err)
 	}
 	log.Finfo("vfs: workspace mounted at %s", fs.Root())
+
+	if os.Getenv("PEGG_SCHEDULER") != "0" {
+		if err := sched.Start(context.Background()); err != nil {
+			return fmt.Errorf("bootstrap: start scheduler: %w", err)
+		}
+		defer sched.Stop()
+	}
 
 	mcpMgr, err := mcp.Module(cfg.MCPServers, log)
 	if err != nil {
@@ -147,7 +171,7 @@ func Run(args []string) error {
 
 	log.Info("application started")
 
-	app := cli.New(bus, cfg, log, fs, sess, mgr, decMgr, memMgr, mcpMgr, lspMgr, cacheStore, pluginMgr)
+	app := cli.New(bus, cfg, log, fs, sess, mgr, decMgr, memMgr, mcpMgr, lspMgr, cacheStore, pluginMgr, sched)
 	if err := app.Execute(args); err != nil {
 		return fmt.Errorf("bootstrap: cli: %w", err)
 	}

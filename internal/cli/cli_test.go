@@ -64,7 +64,7 @@ func newTestCLI(t *testing.T) (*CLI, event.Bus) {
 	}
 	t.Cleanup(func() { sess.Close() })
 
-	c := New(bus, cfg, testLogger(), fs, sess, mgr, nil, nil, nil, nil, nil, nil)
+	c := New(bus, cfg, testLogger(), fs, sess, mgr, nil, nil, nil, nil, nil, nil, nil)
 	return c, bus
 }
 
