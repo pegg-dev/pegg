@@ -150,6 +150,7 @@ nav:
         - Commands: pegg/features/commands.md
         - Adding Context: pegg/features/adding-context.md
         - Sessions: pegg/features/sessions.md
+        - Scheduling: pegg/features/scheduling.md
         - Permissions: pegg/features/permissions.md
         - Notifications: pegg/features/notifications.md
         - Connect: pegg/features/connect.md

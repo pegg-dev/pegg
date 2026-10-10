@@ -27,6 +27,7 @@ import (
 	"github.com/peggco/pegg/internal/llm"
 	"github.com/peggco/pegg/internal/memory"
 	"github.com/peggco/pegg/internal/router"
+	"github.com/peggco/pegg/internal/schedule"
 	"github.com/peggco/pegg/internal/session"
 	"github.com/peggco/pegg/internal/utils/query"
 	"github.com/peggco/pegg/internal/vfs"
@@ -300,6 +301,7 @@ func newRunTestCLI(t *testing.T) (*CLI, *config.Config, *llm.Manager) {
 	web.WebTools(fs)
 	loadskill.LoadSkillTool(sess)
 	plan.PlanTools(fs)
+	schedule.ScheduleTools(nil)
 	_ = memory.RegisterTools(nil)
 	middlewares.Create(fs, middlewares.Deps{})
 	orchestrator.Register(fs)
@@ -308,7 +310,7 @@ func newRunTestCLI(t *testing.T) (*CLI, *config.Config, *llm.Manager) {
 	}
 
 	addRunProvider(t, cfg, mgr, "runprov", "m1")
-	return New(bus, cfg, log, fs, sess, mgr, nil, nil, nil, nil, nil, nil), cfg, mgr
+	return New(bus, cfg, log, fs, sess, mgr, nil, nil, nil, nil, nil, nil, nil), cfg, mgr
 }
 
 func addRunProvider(t *testing.T, cfg *config.Config, mgr *llm.Manager, name string, modelIDs ...string) {

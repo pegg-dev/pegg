@@ -24,7 +24,7 @@ func newOrchestratorAgent(fs *vfs.VFS) (*agent.Agent, error) {
 			return sys
 		}),
 		agent.WithTools(file.Tools(fs)...),
-		agent.WithToolNames("askuserquestion", "bash", "task", "taskstatus", "todoread", "todowrite", "webfetch", "websearch", "loadskill", "enterplanmode", "exitplanmode", "mem-search", "mem-read"),
+		agent.WithToolNames("askuserquestion", "bash", "task", "taskstatus", "todoread", "todowrite", "webfetch", "websearch", "loadskill", "enterplanmode", "exitplanmode", "mem-search", "mem-read", "schedule"),
 		agent.WithMiddlewareNames("loop-detector", "redaction", "retry", "permission", "compaction"),
 	)
 

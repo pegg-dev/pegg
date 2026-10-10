@@ -19,6 +19,7 @@ import (
 	"github.com/peggco/pegg/internal/mcp"
 	"github.com/peggco/pegg/internal/memory"
 	"github.com/peggco/pegg/internal/plugin"
+	"github.com/peggco/pegg/internal/schedule"
 	"github.com/peggco/pegg/internal/session"
 	"github.com/peggco/pegg/internal/tui"
 	"github.com/peggco/pegg/internal/tui/page/settings"
@@ -38,13 +39,14 @@ type CLI struct {
 	fs        *vfs.VFS
 	cache     cache.Cache
 	pluginMgr *plugin.Manager
+	sched     *schedule.Manager
 	added     bool
 	root      *cobra.Command
 	commands  hook.Hook[[]*cobra.Command]
 	picker    func(items []string, label string) (int, error)
 }
 
-func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, sessions *session.Manager, llmMgr *llm.Manager, decMgr *decision.Manager, memMgr *memory.Manager, mcpMgr *mcp.Manager, lspMgr *lsp.Manager, cache cache.Cache, pluginMgr *plugin.Manager) *CLI {
+func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, sessions *session.Manager, llmMgr *llm.Manager, decMgr *decision.Manager, memMgr *memory.Manager, mcpMgr *mcp.Manager, lspMgr *lsp.Manager, cache cache.Cache, pluginMgr *plugin.Manager, sched *schedule.Manager) *CLI {
 	c := &CLI{
 		bus:       bus,
 		cfg:       cfg,
@@ -58,6 +60,7 @@ func New(bus event.Bus, cfg *config.Config, log *logger.Logger, vfs *vfs.VFS, se
 		mcpMgr:    mcpMgr,
 		lspMgr:    lspMgr,
 		pluginMgr: pluginMgr,
+		sched:     sched,
 		root:      newRootCommand(),
 		picker:    defaultPicker,
 	}
@@ -116,6 +119,7 @@ func (c *CLI) registerDefaultCommands() {
 			c.newConfigCommand(),
 			c.newSessionCommand(),
 			c.newRunCommand(),
+			c.newScheduleCommand(),
 			c.newMCPCommand(),
 			c.newLSPCommand(),
 			c.newTUICommand(),

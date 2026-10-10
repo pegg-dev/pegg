@@ -43,6 +43,12 @@ language servers — all inside a sandboxed workspace.
     System reminders keep every agent informed mid-turn: usage and context-window
     status, background subagent results, and more — injected automatically.
 
+- [:lucide-calendar-clock:{ .lg } **Scheduled automations**](features/scheduling.md)
+
+    Run the agent on a cron schedule — daily summaries, weekly checks, recurring
+    reminders — with each run saved as its own session. Fires while the TUI,
+    server, or connect daemon is running.
+
 - [:lucide-brain:{ .lg } **Project memory**](features/memory.md)
 
     A markdown-based memory system: an observer distills every run into

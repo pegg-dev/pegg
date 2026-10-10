@@ -10,16 +10,18 @@ import (
 	"github.com/peggco/pegg/internal/decision"
 	"github.com/peggco/pegg/internal/llm"
 	"github.com/peggco/pegg/internal/memory"
+	"github.com/peggco/pegg/internal/schedule"
 	"github.com/peggco/pegg/internal/session"
 	"github.com/peggco/pegg/internal/vfs"
 )
 
 type Options struct {
-	LLM      *llm.Manager
-	Decision *decision.Manager
-	Config   *config.Config
-	Bus      event.Bus
-	Memory   *memory.Manager
+	LLM       *llm.Manager
+	Decision  *decision.Manager
+	Config    *config.Config
+	Bus       event.Bus
+	Memory    *memory.Manager
+	Scheduler *schedule.Manager
 }
 
 func Create(fs *vfs.VFS, sess *session.Manager, opts Options) error {
@@ -41,6 +43,9 @@ func Create(fs *vfs.VFS, sess *session.Manager, opts Options) error {
 	}
 	if err := reminders.Create(opts.Bus); err != nil {
 		return err
+	}
+	if opts.Scheduler != nil {
+		schedule.ScheduleTools(opts.Scheduler)
 	}
 	return nil
 }

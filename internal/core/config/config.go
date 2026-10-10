@@ -126,6 +126,21 @@ type SmartRouterConfig struct {
 	Agents   map[string]RouterAgentConfig `json:"agents,omitempty"`
 }
 
+type SchedulerConfig struct {
+	Enabled      bool   `json:"enabled"`
+	StoreDir     string `json:"store_dir,omitempty"`
+	HistoryLimit int    `json:"history_limit,omitempty"`
+}
+
+const DefaultSchedulerHistoryLimit = 50
+
+func (s *SchedulerConfig) HistoryLimitValue() int {
+	if s == nil || s.HistoryLimit <= 0 {
+		return DefaultSchedulerHistoryLimit
+	}
+	return s.HistoryLimit
+}
+
 type MemoryConfig struct {
 	Enabled       bool     `json:"enabled"`
 	Provider      string   `json:"provider,omitempty"`
@@ -206,6 +221,7 @@ type Config struct {
 	Compaction      *CompactionConfig               `json:"compaction,omitempty"`
 	SmartRouter     *SmartRouterConfig              `json:"smart_router,omitempty"`
 	Memory          *MemoryConfig                   `json:"memory,omitempty"`
+	Scheduler       *SchedulerConfig                `json:"scheduler,omitempty"`
 	Plugins         PluginConfig                    `json:"plugins,omitempty"`
 	Connect         *ConnectConfig                  `json:"connect,omitempty"`
 	MCPServers      map[string]MCPServerConfig      `json:"mcp_servers,omitempty"`
@@ -259,6 +275,7 @@ func DefaultConfig() *Config {
 				"askuserquestion": "allow",
 				"enterplanmode":   "ask",
 				"exitplanmode":    "ask",
+				"schedule":        "semi-ask",
 			},
 		},
 		Plugins: PluginConfig{
@@ -283,6 +300,10 @@ func DefaultConfig() *Config {
 			Enabled:       true,
 			ContextBudget: DefaultMemoryBudget,
 			MaxResults:    DefaultMemoryMaxResults,
+		},
+		Scheduler: &SchedulerConfig{
+			Enabled:      true,
+			HistoryLimit: DefaultSchedulerHistoryLimit,
 		},
 		MCPServers:      make(map[string]MCPServerConfig),
 		LanguageServers: make(map[string]LanguageServerConfig),
