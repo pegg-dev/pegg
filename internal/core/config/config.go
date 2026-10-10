@@ -97,7 +97,7 @@ type ConnectConfig struct {
 	ResponseTimeoutSecs int      `json:"response_timeout_secs,omitempty"`
 }
 
-const DefaultConnectRelayURL = "ws://connect.pegg.dev"
+const DefaultConnectRelayURL = "wss://connect.pegg.dev"
 
 const DefaultConnectConcurrency = 4
 
