@@ -290,6 +290,10 @@ pegg schedule trigger <id>
 omitted interactively, Pegg offers a menu of common expressions plus a custom
 option.
 
+On an interactive terminal, the commands that take an `<id>` (`get`, `trigger`,
+`pause`, `resume`, `update`, `history`, `stats`, `delete`) accept no id and instead
+list your schedules by name for you to pick.
+
 ## `pegg logs`
 
 View application logs.
