@@ -59,6 +59,40 @@ func (c *CLI) requireScheduler() error {
 	return nil
 }
 
+func (c *CLI) resolveScheduleID(args []string) (string, error) {
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		return args[0], nil
+	}
+	if !stdinInteractive() {
+		return "", errors.New("cli: schedule id is required")
+	}
+	return c.selectSchedule()
+}
+
+func (c *CLI) selectSchedule() (string, error) {
+	list := c.sched.List()
+	if len(list) == 0 {
+		return "", errors.New("cli: no schedules configured")
+	}
+	items := make([]string, 0, len(list))
+	for _, s := range list {
+		status := "active"
+		if !s.Enabled {
+			status = "paused"
+		}
+		items = append(items, fmt.Sprintf("%-24s %-7s %-16s %s",
+			truncate(s.Name, 24), status, s.Cron, s.ID))
+	}
+	idx, err := c.picker(items, "Select schedule")
+	if err != nil {
+		return "", err
+	}
+	if idx < 0 || idx >= len(list) {
+		return "", errors.New("cli: invalid schedule selection")
+	}
+	return list[idx].ID, nil
+}
+
 func (c *CLI) newScheduleCreateCommand() *cobra.Command {
 	var opts schedule.CreateOptions
 	cmd := &cobra.Command{
@@ -188,14 +222,18 @@ func (c *CLI) runScheduleList(out io.Writer, tags []string) error {
 
 func (c *CLI) newScheduleGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "get <id>",
+		Use:   "get [id]",
 		Short: "Show a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			s, err := c.sched.Get(args[0])
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
+				return err
+			}
+			s, err := c.sched.Get(id)
 			if err != nil {
 				return err
 			}
@@ -263,17 +301,21 @@ func (c *CLI) newScheduleActiveCommand() *cobra.Command {
 
 func (c *CLI) newScheduleTriggerCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "trigger <id>",
+		Use:   "trigger [id]",
 		Short: "Run a schedule immediately",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			if err := c.sched.Trigger(args[0]); err != nil {
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "triggered %s\n", args[0])
+			if err := c.sched.Trigger(id); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "triggered %s\n", id)
 			return nil
 		},
 	}
@@ -281,17 +323,21 @@ func (c *CLI) newScheduleTriggerCommand() *cobra.Command {
 
 func (c *CLI) newSchedulePauseCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "pause <id>",
+		Use:   "pause [id]",
 		Short: "Pause a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			if _, err := c.sched.Pause(args[0]); err != nil {
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "paused %s\n", args[0])
+			if _, err := c.sched.Pause(id); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "paused %s\n", id)
 			return nil
 		},
 	}
@@ -299,17 +345,21 @@ func (c *CLI) newSchedulePauseCommand() *cobra.Command {
 
 func (c *CLI) newScheduleResumeCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "resume <id>",
+		Use:   "resume [id]",
 		Short: "Resume a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			if _, err := c.sched.Resume(args[0]); err != nil {
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "resumed %s\n", args[0])
+			if _, err := c.sched.Resume(id); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "resumed %s\n", id)
 			return nil
 		},
 	}
@@ -323,11 +373,15 @@ func (c *CLI) newScheduleUpdateCommand() *cobra.Command {
 		enabled                                        bool
 	)
 	cmd := &cobra.Command{
-		Use:   "update <id>",
+		Use:   "update [id]",
 		Short: "Update a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
+				return err
+			}
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
 				return err
 			}
 			opts := schedule.UpdateOptions{}
@@ -362,7 +416,7 @@ func (c *CLI) newScheduleUpdateCommand() *cobra.Command {
 			if flags.Changed("enabled") {
 				opts.Enabled = &enabled
 			}
-			s, err := c.sched.Update(args[0], opts)
+			s, err := c.sched.Update(id, opts)
 			if err != nil {
 				return err
 			}
@@ -386,14 +440,18 @@ func (c *CLI) newScheduleUpdateCommand() *cobra.Command {
 func (c *CLI) newScheduleHistoryCommand() *cobra.Command {
 	var limit int
 	cmd := &cobra.Command{
-		Use:   "history <id>",
+		Use:   "history [id]",
 		Short: "Show past runs of a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			runs, err := c.sched.History(args[0], limit)
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
+				return err
+			}
+			runs, err := c.sched.History(id, limit)
 			if err != nil {
 				return err
 			}
@@ -419,14 +477,18 @@ func (c *CLI) newScheduleHistoryCommand() *cobra.Command {
 
 func (c *CLI) newScheduleStatsCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "stats <id>",
+		Use:   "stats [id]",
 		Short: "Show statistics for a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			st, err := c.sched.Stats(args[0])
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
+				return err
+			}
+			st, err := c.sched.Stats(id)
 			if err != nil {
 				return err
 			}
@@ -450,17 +512,21 @@ func (c *CLI) newScheduleStatsCommand() *cobra.Command {
 
 func (c *CLI) newScheduleDeleteCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "delete <id>",
+		Use:   "delete [id]",
 		Short: "Delete a schedule",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.requireScheduler(); err != nil {
 				return err
 			}
-			if err := c.sched.Delete(args[0]); err != nil {
+			id, err := c.resolveScheduleID(args)
+			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "deleted %s\n", args[0])
+			if err := c.sched.Delete(id); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "deleted %s\n", id)
 			return nil
 		},
 	}

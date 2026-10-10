@@ -101,6 +101,9 @@ expression** option. You can also type a cron expression directly.
 | `pegg schedule stats <id>` | Success rate, average duration, last run, last failure |
 | `pegg schedule delete <id>` | Remove a schedule (past run sessions are kept) |
 
+On an interactive terminal you can omit `<id>` from any of these commands — Pegg
+lists your schedules by name and lets you pick one.
+
 ## Cron expressions
 
 Cron uses five fields — **minute hour day-of-month month day-of-week** — in the
